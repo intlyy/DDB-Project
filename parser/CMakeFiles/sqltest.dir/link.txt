@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/sqltest.dir/SELECT_sta.cpp.o CMakeFiles/sqltest.dir/utils.cpp.o  -o sqltest 

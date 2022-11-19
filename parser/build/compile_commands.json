@@ -1,0 +1,12 @@
+[
+{
+  "directory": "E:/360MoveData/Users/87539/Desktop/myDDB/parser/build",
+  "command": "D:\\Mingw\\bin\\g++.exe   -g -o CMakeFiles\\sqltest.dir\\SELECT_sta.cpp.obj -c E:\\360MoveData\\Users\\87539\\Desktop\\myDDB\\parser\\SELECT_sta.cpp",
+  "file": "E:/360MoveData/Users/87539/Desktop/myDDB/parser/SELECT_sta.cpp"
+},
+{
+  "directory": "E:/360MoveData/Users/87539/Desktop/myDDB/parser/build",
+  "command": "D:\\Mingw\\bin\\g++.exe   -g -o CMakeFiles\\sqltest.dir\\utils.cpp.obj -c E:\\360MoveData\\Users\\87539\\Desktop\\myDDB\\parser\\utils.cpp",
+  "file": "E:/360MoveData/Users/87539/Desktop/myDDB/parser/utils.cpp"
+}
+]

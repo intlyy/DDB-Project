@@ -1,0 +1,3 @@
+/home/lyk/myDDB/parser/CMakeFiles/rebuild_cache.dir
+/home/lyk/myDDB/parser/CMakeFiles/edit_cache.dir
+/home/lyk/myDDB/parser/CMakeFiles/sqltest.dir

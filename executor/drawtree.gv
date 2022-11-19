@@ -1,0 +1,7 @@
+digraph G {
+1[label=1,label="SELECT * FROM customer_1",color=red];
+2[label=2,label="SELECT * FROM customer_2",color=yellow];
+3[label=3,label="SELECT * FROM tree_0_node_2 JOIN tree_0_node_1 USING (id)",color=red];
+2->3;
+1->3;
+}

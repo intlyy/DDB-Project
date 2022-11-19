@@ -1,0 +1,139 @@
+{
+	"kind" : "toolchains",
+	"toolchains" : 
+	[
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"D:/Mingw/lib/gcc/mingw32/9.2.0/include",
+						"D:/Mingw/include",
+						"D:/Mingw/lib/gcc/mingw32/9.2.0/include-fixed"
+					],
+					"linkDirectories" : 
+					[
+						"D:/Mingw/lib/gcc/mingw32/9.2.0",
+						"D:/Mingw/lib/gcc",
+						"D:/Mingw/mingw32/lib",
+						"D:/Mingw/lib"
+					],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : 
+					[
+						"mingw32",
+						"mingwex",
+						"mingw32",
+						"mingwex",
+						"gcc",
+						"moldname",
+						"advapi32",
+						"shell32",
+						"user32",
+						"kernel32",
+						"mingw32",
+						"mingwex",
+						"mingw32",
+						"mingwex",
+						"gcc",
+						"moldname"
+					]
+				},
+				"path" : "D:/Mingw/bin/gcc.exe",
+				"version" : "9.2.0"
+			},
+			"language" : "C",
+			"sourceFileExtensions" : 
+			[
+				"c",
+				"m"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"id" : "GNU",
+				"implicit" : 
+				{
+					"includeDirectories" : 
+					[
+						"D:/Mingw/lib/gcc/mingw32/9.2.0/include/c++",
+						"D:/Mingw/lib/gcc/mingw32/9.2.0/include/c++/mingw32",
+						"D:/Mingw/lib/gcc/mingw32/9.2.0/include/c++/backward",
+						"D:/Mingw/lib/gcc/mingw32/9.2.0/include",
+						"D:/Mingw/include",
+						"D:/Mingw/lib/gcc/mingw32/9.2.0/include-fixed"
+					],
+					"linkDirectories" : 
+					[
+						"D:/Mingw/lib/gcc/mingw32/9.2.0",
+						"D:/Mingw/lib/gcc",
+						"D:/Mingw/mingw32/lib",
+						"D:/Mingw/lib"
+					],
+					"linkFrameworkDirectories" : [],
+					"linkLibraries" : 
+					[
+						"stdc++",
+						"mingw32",
+						"mingwex",
+						"mingw32",
+						"mingwex",
+						"gcc_s",
+						"gcc",
+						"moldname",
+						"advapi32",
+						"shell32",
+						"user32",
+						"kernel32",
+						"mingw32",
+						"mingwex",
+						"mingw32",
+						"mingwex",
+						"gcc_s",
+						"gcc",
+						"moldname"
+					]
+				},
+				"path" : "D:/Mingw/bin/g++.exe",
+				"version" : "9.2.0"
+			},
+			"language" : "CXX",
+			"sourceFileExtensions" : 
+			[
+				"C",
+				"M",
+				"c++",
+				"cc",
+				"cpp",
+				"cxx",
+				"mm",
+				"mpp",
+				"CPP",
+				"ixx",
+				"cppm"
+			]
+		},
+		{
+			"compiler" : 
+			{
+				"implicit" : {},
+				"path" : "D:/Mingw/bin/windres.exe"
+			},
+			"language" : "RC",
+			"sourceFileExtensions" : 
+			[
+				"rc",
+				"RC"
+			]
+		}
+	],
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 0
+	}
+}

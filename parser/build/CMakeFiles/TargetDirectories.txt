@@ -1,0 +1,3 @@
+E:/360MoveData/Users/87539/Desktop/myDDB/parser/build/CMakeFiles/sqltest.dir
+E:/360MoveData/Users/87539/Desktop/myDDB/parser/build/CMakeFiles/edit_cache.dir
+E:/360MoveData/Users/87539/Desktop/myDDB/parser/build/CMakeFiles/rebuild_cache.dir

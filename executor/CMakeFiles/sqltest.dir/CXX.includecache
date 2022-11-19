@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/lyk/myDDB/executor/connect2sql.cpp
+/home/lyk/myDDB/executor/connect2sql.h
+-
+
+/home/lyk/myDDB/executor/connect2sql.h
+stdio.h
+-
+mysql/mysql.h
+-
+string
+-
+cstring
+-
+vector
+-
+cassert
+-
+iostream
+-
+
