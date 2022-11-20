@@ -1,1 +1,0 @@
-/usr/bin/c++  -pthread  -rdynamic CMakeFiles/sqltest.dir/SELECT_sta.cpp.o CMakeFiles/sqltest.dir/Tree.cpp.o CMakeFiles/sqltest.dir/connect2sql.cpp.o CMakeFiles/sqltest.dir/executor.cpp.o CMakeFiles/sqltest.dir/main.cpp.o CMakeFiles/sqltest.dir/utils.cpp.o  -o sqltest  -lmysqlclient 

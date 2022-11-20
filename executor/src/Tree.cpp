@@ -1,4 +1,4 @@
-#include "./Tree.h"
+#include "../include/Tree.h"
 
 QTNode getroot(QTree tree)
 {

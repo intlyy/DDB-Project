@@ -24,8 +24,8 @@ child =>
 parent =>
 0
 */
-#include "SELECT_sta.h"
-#include "executor.h"
+#include "../include/SELECT_sta.h"
+#include "../include/executor.h"
 #include<string>
 using namespace std;
 

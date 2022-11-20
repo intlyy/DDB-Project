@@ -1,3 +1,0 @@
-/home/lyk/myDDB/executor/CMakeFiles/rebuild_cache.dir
-/home/lyk/myDDB/executor/CMakeFiles/edit_cache.dir
-/home/lyk/myDDB/executor/CMakeFiles/sqltest.dir

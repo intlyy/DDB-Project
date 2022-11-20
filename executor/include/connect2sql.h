@@ -8,10 +8,11 @@
 
 #define HOST "localhost"
 #define USERNAME "root"
-#define PASSWORD ""
+#define PASSWORD "Ruc@mysql"
 //#define DATABASE "test"  
 //#define PORT 7654 
 #define TMPPATH "/mnt/d/DDB/"
+#define SOURCEPATH "/mnt/d/DDB/"
 
 using namespace std;
 

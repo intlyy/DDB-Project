@@ -1,0 +1,64 @@
+// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package ddb;
+
+service CallRemoteDB {
+  //rpc RemoteInsert (Statement) returns (Result) {}
+  rpc RemoteSelect (QueryTree) returns (ExecuteTree) {}
+  rpc RemoteFetchFile (ResultPath) returns (stream ResultSet) {}
+}
+
+// The request message containing the user's name.
+message QueryNode{
+  int32 id = 1;
+  repeated int32 children = 2;
+  int32 parent = 3;
+  string sql_statement = 4;
+  int32 site = 5;
+}
+
+message QueryTree{
+  int32 tree_id = 1;
+  int32 root = 2;
+  repeated QueryNode Nodes = 3;
+}
+
+message ExecuteNode{
+  int32 id = 1;
+  int64 vol = 2;
+  string res = 3;
+  repeated int32 children = 4;
+  int32 parent = 5;
+  int32 site = 6;
+  double time_spend = 7;
+}
+
+message ExecuteTree{
+  int32 tree_id = 1;
+  int32 root = 2;
+  repeated ExecuteNode Nodes = 3;
+}
+
+message ResultPath {
+  string src_path = 1;
+  string target_path = 2;
+}
+
+message ResultSet {
+  bytes data = 1;
+}
+

@@ -1,4 +1,4 @@
-#include "executor.h"
+#include "../include/executor.h"
 
 ETree Data_Select_Execute(QTree tree)
 {
@@ -23,15 +23,16 @@ ETree Data_Select_Execute(QTree tree)
     {
         string res_name = "tree_" + to_string(tree.tree_id) + "_node_" + to_string(root.id);
         string select_res;
-        if( root.site == LOCALSITE || root.site == LOCALSITE2 )
+        if( root.site == LOCALSITE)
         {
             select_res=Select(root.sql_statement, root.site, res_name);
         }
         else
         {
+	    std::cout << "root site is: " << root.site << ", but localsite is: " << LOCALSITE << std::endl;
             printf("site do not in this station!");
         }
-        std::cout<<"select_res:"<<select_res<<std::endl;
+	std::cout<<"select_res:"<<select_res<<std::endl;
         if(select_res=="FAIL")
         {
             time_t end_time = time(NULL);
@@ -75,14 +76,14 @@ ETree Data_Select_Execute(QTree tree)
 
             select_thread_exec_trees[q] = resultObjs[q].get_future();
 
-            if(site == LOCALSITE || site == LOCALSITE2)
+            if(site == LOCALSITE)
             {
                 select_threads[q] = std::thread(Data_Select_Execute_thread, sub_tree, std::ref(resultObjs[q]));
             }
             else
             {
-                printf("WTF???\n");
-                //select_threads[q] = std::thread(RPC_Data_Select_Execute_thread, sub_tree, site, std::ref(resultObjs[q]));
+                printf("remote call in site %d\n", site);
+                select_threads[q] = std::thread(RPC_Data_Select_Execute_Thread, sub_tree, site, std::ref(resultObjs[q]));
             }
         }
         printf("create ok!");
@@ -139,16 +140,15 @@ ETree Data_Select_Execute(QTree tree)
     /*
         清理数据库
         算了不想写了
-
         算了还是得写
-    */
+     */
     for(int child_id: children)
     {
-        string drop_sql = "drop table tree_" + to_string(tree.tree_id) + "_node_" + to_string(child_id);
-        string drop_res = Mysql_Delete(drop_sql, root.site);
-        if(drop_res != "OK"){
-            std::cout<<"release failed! "<< drop_sql.data()<<std::endl;
-        }
+         string drop_sql = "drop table tree_" + to_string(tree.tree_id) + "_node_" + to_string(child_id);
+         string drop_res = Mysql_Delete(drop_sql, root.site);
+         if(drop_res != "OK"){
+             std::cout<<"release failed! "<< drop_sql.data()<<std::endl;
+         }
     }
 
     if(root_select_res == "FAIL")
@@ -204,15 +204,16 @@ void Data_Select_Execute_thread(QTree tree, std::promise<ETree> &resultObj)
     {
         string res_name = "tree_" + to_string(tree.tree_id) + "_node_" + to_string(root.id);
         string select_res;
-        if( root.site == LOCALSITE || root.site == LOCALSITE2 )
+        if( root.site == LOCALSITE)
         {
             select_res=Select(root.sql_statement, root.site, res_name);
         }
         else
         {
+	    std::cout << "root site is: " << root.site << ", but localsite is: " << LOCALSITE << std::endl;
             printf("site do not in this station!");
         }
-        std::cout<<"select_res:"<<select_res<<std::endl;
+	std::cout<<"select_res:"<<select_res<<std::endl;
         if(select_res=="FAIL")
         {
             time_t end_time = time(NULL);
@@ -260,14 +261,14 @@ void Data_Select_Execute_thread(QTree tree, std::promise<ETree> &resultObj)
 
             select_thread_exec_trees[q] = resultObjs[q].get_future();
 
-            if(site == LOCALSITE || site == LOCALSITE2)
+            if(site == LOCALSITE)
             {
                 select_threads[q] = std::thread(Data_Select_Execute_thread, sub_tree, std::ref(resultObjs[q]));
             }
             else
             {
-                //select_threads[q] = std::thread(RPC_Data_Select_Execute_Thread, sub_tree, site, std::ref(resultObjs[q]));
-                printf("WTF???\n");
+                select_threads[q] = std::thread(RPC_Data_Select_Execute_Thread, sub_tree, site, std::ref(resultObjs[q]));
+                printf("remote call in site %d\n", site);
             }
         }
 
@@ -328,17 +329,15 @@ void Data_Select_Execute_thread(QTree tree, std::promise<ETree> &resultObj)
     /*
         清理数据库
         算了不想写了
-
         不行还是得写
-    */
+     */
     for(int child_id: children){
-        string drop_sql = "drop table tree_" + to_string(tree.tree_id) + "_node_" + to_string(child_id);
-        string drop_res = Mysql_Delete(drop_sql, root.site);
-        if(drop_res != "OK"){
-            std::cout<<"release failed! "<< drop_sql.data()<<std::endl;
-        }
+         string drop_sql = "drop table tree_" + to_string(tree.tree_id) + "_node_" + to_string(child_id);
+         string drop_res = Mysql_Delete(drop_sql, root.site);
+         if(drop_res != "OK"){
+             std::cout<<"release failed! "<< drop_sql.data()<<std::endl;
+         }
     }
-
 
     if(root_select_res == "FAIL")
     {
@@ -371,22 +370,4 @@ void Data_Select_Execute_thread(QTree tree, std::promise<ETree> &resultObj)
         return;
 
     }
-    
 }
-
-/*
-void RPC_Data_Select_Execute_Thread(QTree tree, int site, std::promise<ETree> &resultObj){
-    
-    // 在site上执行并把ETree传过来 
-    ETree res_sub_tree = RPC_GET_ETree(tree, site);
-    // 把文件传过来,本地存储路径为TMPPATH，远程路径通过ETCD得到
-    string res_name = "tree_" + to_string(tree.tree_id) + "_node_" + to_string(tree.root);
-    string SourcePath = ETCD_GET_PATH(site);
-    string LocalPath = TMPPATH;
-    string transfer_res = RPC_GET_FILE(res_name, site, SourcePath, LocalPath);
-    if(transfer_res=="OK"){
-        printf("%s transfered success!\n", res_name);
-    }
-    resultObj.set_value(res_sub_tree);
-}
-*/
