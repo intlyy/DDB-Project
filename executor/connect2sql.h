@@ -29,5 +29,7 @@ auto res_print(string res_name) ->void;
 
 auto res_getrows(string res_name) ->int;
 
+auto Mysql_Delete(string sql, int site) ->string;
+
 vector<int> res_getcol1(string res_name); 
 

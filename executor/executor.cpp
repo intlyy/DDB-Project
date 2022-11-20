@@ -31,7 +31,7 @@ ETree Data_Select_Execute(QTree tree)
         {
             printf("site do not in this station!");
         }
-        printf("select_res: %s\n" , select_res);
+        std::cout<<"select_res:"<<select_res<<std::endl;
         if(select_res=="FAIL")
         {
             time_t end_time = time(NULL);
@@ -97,7 +97,7 @@ ETree Data_Select_Execute(QTree tree)
                 {
                     res_tree.Nodes.push_back(tmp_exec_node);
                 }
-                string tmp_load_res = tmp_load(res_name, 1);
+                string tmp_load_res = tmp_load(res_name, root.site);
                 if(tmp_load_res == "OK"){
                     printf("tmp table loading of %s succeed!\n", res_name.data());
                 }
@@ -139,7 +139,17 @@ ETree Data_Select_Execute(QTree tree)
     /*
         清理数据库
         算了不想写了
+
+        算了还是得写
     */
+    for(int child_id: children)
+    {
+        string drop_sql = "drop table tree_" + to_string(tree.tree_id) + "_node_" + to_string(child_id);
+        string drop_res = Mysql_Delete(drop_sql, root.site);
+        if(drop_res != "OK"){
+            std::cout<<"release failed! "<< drop_sql.data()<<std::endl;
+        }
+    }
 
     if(root_select_res == "FAIL")
     {
@@ -202,7 +212,7 @@ void Data_Select_Execute_thread(QTree tree, std::promise<ETree> &resultObj)
         {
             printf("site do not in this station!");
         }
-        printf("select_res: %s\n" , select_res);
+        std::cout<<"select_res:"<<select_res<<std::endl;
         if(select_res=="FAIL")
         {
             time_t end_time = time(NULL);
@@ -272,7 +282,7 @@ void Data_Select_Execute_thread(QTree tree, std::promise<ETree> &resultObj)
                 {
                     res_tree.Nodes.push_back(tmp_exec_node);
                 }
-                string tmp_load_res = tmp_load(res_name, 1);
+                string tmp_load_res = tmp_load(res_name, root.site);
                 if(tmp_load_res == "OK"){
                     printf("tmp table loading of %s succeed!\n", res_name.data());
                 }
@@ -318,7 +328,17 @@ void Data_Select_Execute_thread(QTree tree, std::promise<ETree> &resultObj)
     /*
         清理数据库
         算了不想写了
+
+        不行还是得写
     */
+    for(int child_id: children){
+        string drop_sql = "drop table tree_" + to_string(tree.tree_id) + "_node_" + to_string(child_id);
+        string drop_res = Mysql_Delete(drop_sql, root.site);
+        if(drop_res != "OK"){
+            std::cout<<"release failed! "<< drop_sql.data()<<std::endl;
+        }
+    }
+
 
     if(root_select_res == "FAIL")
     {
@@ -351,4 +371,22 @@ void Data_Select_Execute_thread(QTree tree, std::promise<ETree> &resultObj)
         return;
 
     }
+    
 }
+
+/*
+void RPC_Data_Select_Execute_Thread(QTree tree, int site, std::promise<ETree> &resultObj){
+    
+    // 在site上执行并把ETree传过来 
+    ETree res_sub_tree = RPC_GET_ETree(tree, site);
+    // 把文件传过来,本地存储路径为TMPPATH，远程路径通过ETCD得到
+    string res_name = "tree_" + to_string(tree.tree_id) + "_node_" + to_string(tree.root);
+    string SourcePath = ETCD_GET_PATH(site);
+    string LocalPath = TMPPATH;
+    string transfer_res = RPC_GET_FILE(res_name, site, SourcePath, LocalPath);
+    if(transfer_res=="OK"){
+        printf("%s transfered success!\n", res_name);
+    }
+    resultObj.set_value(res_sub_tree);
+}
+*/

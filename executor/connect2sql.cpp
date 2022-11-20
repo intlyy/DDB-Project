@@ -318,6 +318,57 @@ auto tmp_load(string tmp_data,int site) ->string
     return "OK";
 }
 
+auto Mysql_Delete(string sql, int site) ->string
+{
+    char* DATABASE="test";
+    char* DATABASE1="test";
+    char* DATABASE2="remot_test";
+    MYSQL mysql;
+    int res=-1;
+    int PORT=-1;
+    const char* SOCKET;
+
+    if(site==2)
+    {
+        PORT = 7655;
+        SOCKET = "/var/run/mysqld/mysqld.sock";
+        DATABASE = DATABASE2;
+    }
+    else
+    {
+        PORT = 7654;
+        SOCKET = "/var/run/mysqld/mysqld.sock";
+        DATABASE = DATABASE1;
+    }        
+    
+            
+    assert(("非法site",PORT!=-1));
+
+    mysql_init(&mysql);
+    if(mysql_real_connect(&mysql,HOST,USERNAME,PASSWORD,DATABASE,PORT,SOCKET,0))
+    {
+        printf("connect success to delete!\n");
+        const char* p = sql.data();
+        res=mysql_query(&mysql,p);
+        mysql_close(&mysql);
+        if(res)
+        {
+            printf("error %d !\n",res);
+            return "FAILED";
+        }
+        else
+        {
+            printf("delete OK\n");
+            return "OK";
+        }
+    }
+    else
+    {
+        printf("connect failed\n");
+    }
+    assert(res!=-1);
+}
+
 auto res_print(string res_name) ->void;
 
 auto res_getrows(string res_name) ->int;
