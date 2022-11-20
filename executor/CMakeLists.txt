@@ -59,20 +59,26 @@ target_link_libraries(hw_grpc_proto
 # include absl
 include_directories(/home/liuwei/grpc/include)
 include_directories(/home/liuwei/.local/include)
+include_directories(/usr/local/include/etcd)
+
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 file(GLOB SRC_LIST "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp")
 add_executable(main ${SRC_LIST})
-add_executable(server_main src/server_main.cc src/ddb_server.cpp src/executor.cpp src/Tree.cpp src/connect2sql.cpp)
+add_executable(server_main src/server_main.cc src/ddb_server.cpp src/executor.cpp src/Tree.cpp src/connect2sql.cpp src/myetcd.cpp)
 target_link_libraries(main
     hw_grpc_proto
     mysqlclient
+    etcd-cpp-api
+    cpprest
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF})
 target_link_libraries(server_main
     hw_grpc_proto
     mysqlclient
+    etcd-cpp-api
+    cpprest
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF})

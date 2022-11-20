@@ -110,8 +110,15 @@ void RPC_Data_Select_Execute_Thread(QTree qtree, int site, std::promise<ETree> &
       grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials()));
     ETree execute_result = ddbclient.RemoteSelect(qtree);
     string res_name = "tree_" + to_string(qtree.tree_id) + "_node_" + to_string(qtree.root);
-    string SourcePath = SOURCEPATH + res_name + ".sql";
-    string LocalPath = TMPPATH + res_name + ".sql";
+    etcd::Client etcd_client(ENDPOINTS);
+    string SourcePath = query_etcd(&etcd_client, FILE_PATH_KEY+to_string(site)).value().as_string();
+    string LocalPath = query_etcd(&etcd_client, FILE_PATH_KEY+to_string(LOCALSITE)).value().as_string();
+    if ( SourcePath.empty() || LocalPath.empty()) {
+      cout << "File store path not been set in site " << site <<endl;
+      return;
+    }
+    SourcePath += res_name + ".sql";
+    LocalPath += res_name + ".sql";
     cout << "source path is: " << SourcePath <<endl;
     cout << "local path is: " << LocalPath <<endl;
     ResultPath rs;

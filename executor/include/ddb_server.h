@@ -33,6 +33,7 @@
 
 #include "Tree.h"
 #include "executor.h"
+#include "myetcd.h"
 
 #define BUFFER_SIZE 1024
 #define SITE_NUMBER 2
