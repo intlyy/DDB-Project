@@ -44,7 +44,6 @@ class DDBRemoteCallClient {
 
     Status status = stub_->RemoteSelect(&context, real_req, &real_reply);
 
-    cout << "remote select finish." <<endl;
     ETree reply;
     reply.tree_id = real_reply.tree_id();
     reply.root = real_reply.root();
@@ -119,8 +118,8 @@ void RPC_Data_Select_Execute_Thread(QTree qtree, int site, std::promise<ETree> &
     }
     SourcePath += res_name + ".sql";
     LocalPath += res_name + ".sql";
-    cout << "source path is: " << SourcePath <<endl;
-    cout << "local path is: " << LocalPath <<endl;
+    cout << "source path from etcd is: " << SourcePath <<endl;
+    cout << "local path from etcd is: " << LocalPath <<endl;
     ResultPath rs;
     rs.set_src_path(SourcePath);
     rs.set_target_path(LocalPath);
@@ -160,8 +159,6 @@ class DDBCallRemoteCallServiceImpl final : public CallRemoteDB::Service {
     QTree *real_req = new QTree;
     real_req->tree_id = request->tree_id();
     real_req->root = request->root();
-    std::cout<<"tree id: "<<real_req->tree_id<<std::endl;
-    std::cout<<"root: "<<real_req->root<<std::endl;
     for(int i = 0; i < request->nodes_size(); i++) {
       QueryNode qnode = request->nodes(i);
       QTNode *qtn = new QTNode;
@@ -172,7 +169,7 @@ class DDBCallRemoteCallServiceImpl final : public CallRemoteDB::Service {
       qtn->sql_statement = qnode.sql_statement();
       qtn->site = qnode.site();
       real_req->Nodes.push_back(*qtn);
-      output_query_node(*qtn);
+      //output_query_node(*qtn);
       free(qtn);
     }
     
@@ -181,8 +178,6 @@ class DDBCallRemoteCallServiceImpl final : public CallRemoteDB::Service {
     free(real_req);
     reply->set_tree_id(real_reply.tree_id);
     reply->set_root(real_reply.root);
-    cout << "ETree tree_id: " << reply->tree_id()<< endl;
-    cout << "ETree root: " << reply->root() << endl;
     for (int j = 0; j < real_reply.Nodes.size(); j++ ) {
       ETNode etnode = real_reply.Nodes[j];
       ExecuteNode *en = reply->add_nodes();
@@ -194,15 +189,14 @@ class DDBCallRemoteCallServiceImpl final : public CallRemoteDB::Service {
       en->set_parent(etnode.parent);
       en->set_site(etnode.site);
       en->set_time_spend(etnode.time_spend);
-      output_execute_node(etnode);
+      //output_execute_node(etnode);
     }
-    cout << "client remote finish!" <<endl;
+    cout << "Site " << LOCALSITE <<" has handled remote request finish!" <<endl;
     return Status::OK;
   }
 
   Status RemoteFetchFile(ServerContext* context, const ResultPath* request,
                   ServerWriter<ResultSet>* writer) override {
-    std::cout << "Receive remote fetch file call." << std::endl;
     ResultSet rs;
     char buffer[BUFFER_SIZE];
     string filename = request->src_path();
@@ -214,6 +208,7 @@ class DDBCallRemoteCallServiceImpl final : public CallRemoteDB::Service {
       if(!writer->Write(rs)) break;
     }
     infile.close();
+    std::cout << "Handle remote fetch file call." << std::endl;
     return Status::OK;
   }
 

@@ -57,8 +57,8 @@ target_link_libraries(hw_grpc_proto
   ${_PROTOBUF_LIBPROTOBUF})
 
 # include absl
-include_directories(/home/liuwei/grpc/include)
-include_directories(/home/liuwei/.local/include)
+include_directories($HOME/grpc/include)
+include_directories($HOME/.local/include)
 include_directories(/usr/local/include/etcd)
 
 
