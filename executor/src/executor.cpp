@@ -1,5 +1,91 @@
 #include "../include/executor.h"
 
+void Data_Insert_Delete_Thread(int site, string frag_sql, std::promise<string> &resultObj){
+    /* 判断一下是否为本地，并执行对应sql语句 */
+    string frag_res;
+    string res_output;
+    if(site == LOCALSITE || site == LOCALSITE2){
+        frag_res = Insert(frag_sql, site);
+        printf("localsite.\n%s\n", frag_res.data());
+    }
+    else{
+        printf("not localsite.");
+        //此函数需要实现！在站点site上调用Insert(frag_sql, site)并返回结果
+        frag_res = RPC_Insert(site, frag_sql);
+        
+        // printf("success .");
+        // printf("%s", frag_res.data());
+        // cout << frag_res;
+    }
+    // frag_res = "OK";
+    if(frag_res == "OK"){ /* 目标site上存储成功 */
+        /* 构造输出语句 */
+        res_output = "OK on site ";
+        string s=to_string(site);
+        res_output.append(s);
+        res_output.append(".\n");
+        
+        // printf("%s\n", res_output.data());
+        // return res_output;
+    }
+    else{
+        // printf("FAIL TO LOAD %s", frag_name);
+        res_output = "FAIL on site ";
+        string s=to_string(site);
+        res_output.append(s);
+        res_output.append(".\n");
+        // printf("%s\n", res_output.data());
+        // return res_output_2;
+    }
+    resultObj.set_value(res_output);
+}
+
+/* 本函数供parser调用
+本函数用于执行整个Insert或Delete流程，输入站点列表，分片sql语句列表，返回
+"OK/FAIL on site 1.
+ OK/FAIL on site 2.
+ y seconds used." */
+string Data_Insert_Delete_Execute(vector<int> sitenames, vector<string> sqls)
+{
+    /* 记录开始时间 */
+    time_t start_time = time(NULL);
+    int i;
+    /* 先把空间给申请好 */
+    std::promise<string> resultObjs[MAXTHREAD]; 
+    std::thread load_threads[MAXTHREAD];
+    std::future<string> load_sentences[MAXTHREAD];
+
+    for(i = 0; i < sitenames.size(); i++){           
+        /* 开启一个分片并在对应site存储的线程，通过传promise类给线程，让线程把结果给future类，实现结果返回 */
+        load_sentences[i] = resultObjs[i].get_future();
+        load_threads[i] = std::thread(Data_Insert_Delete_Thread, sitenames[i], sqls[i], std::ref(resultObjs[i]));
+    }
+
+    /* 从每个进程中获得返回结果并汇总 */
+    vector<string> load_results;
+    for(i = 0; i < sitenames.size(); i++){
+        string load_sentence = load_sentences[i].get();
+        load_results.push_back(load_sentence);
+    }
+
+    /* 本意是说所有线程完成了主函数才继续 */
+    for(i = 0; i < sitenames.size(); i++){
+        load_threads[i].join();
+    }
+    /* 计算所花时间 */
+    time_t end_time = time(NULL);
+    double time_spend = difftime(end_time, start_time);
+    /* 构造输出语句 */
+    string time_output = to_string(time_spend);
+    time_output.append(" seconds used.\n");
+    string output_sentence = "";
+    for(i = 0; i < load_results.size(); i++){
+        output_sentence.append(load_results[i]);
+    }
+    output_sentence.append(time_output);
+    return output_sentence;
+}
+
 ETree Data_Select_Execute(QTree tree)
 {
     QTree sub_tree;

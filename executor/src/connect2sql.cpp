@@ -64,6 +64,53 @@ auto Insert(string sql,int site) ->string
 }
 
 auto Delete(string sql,int site) ->string;
+{
+    MYSQL mysql;
+    int res=-1;
+    int PORT=-1;
+    char* DATABASE="test";
+    const char* SOCKET;
+
+    if(site==2)
+    {
+        PORT = 7655;
+        SOCKET = "/var/run/mysqld/mysqld.sock";
+    }
+    else
+    {
+        PORT = 7654;
+        SOCKET = "/var/run/mysqld/mysqld.sock";
+    }        
+    
+            
+    assert(("非法site",PORT!=-1));
+
+    mysql_init(&mysql);
+    if(mysql_real_connect(&mysql,HOST,USERNAME,PASSWORD,DATABASE,PORT,SOCKET,0))
+    {
+        printf("connect success!\n");
+        const char* p = sql.data();
+        res=mysql_query(&mysql,p);
+        mysql_close(&mysql);
+        if(res)
+        {
+            printf("error %d !\n",res);
+            return "FAILED";
+        }
+        else
+        {
+            printf("success!\n");
+            return "success";
+        }
+    }
+    else
+    {
+        printf("connect failed\n");
+    }
+    assert(res!=-1);
+
+}
+
 
 auto Select(string sql,int site,string res_name) ->string
 {
