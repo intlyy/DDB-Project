@@ -20,3 +20,7 @@ void RPC_Data_Select_Execute_Thread(QTree tree, int site, std::promise<ETree> &r
 string Data_Insert_Delete_Execute(vector<int> sitenames, vector<string> sqls);
 
 void Data_Insert_Delete_Thread(int site, string frag_sql, std::promise<string> &resultObj);
+
+string Data_Load_Execute(string create_sql, string load_sql, string main_name, vector<int> sitenames, vector<string> sqls, vector<string> table_names);
+
+void Data_Load_Thread(int site, string frag_sql, string frag_name, std::promise<string> &resultObj);

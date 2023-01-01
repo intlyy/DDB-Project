@@ -128,6 +128,23 @@ int main()
             sql.push_back(s2);
             cout<<Data_Insert_Delete_Execute(site,sql)<<endl;
         }
+        else if(sql_statement.find("COPY") != -1)
+        {
+            string create_sql="create table customer_tmp (id int NOT NULL, name char(100) ,r int DEFAULT NULL, PRIMARY KEY (id))";
+            string load_sql=" LOAD DATA LOCAL INFILE '/mnt/d/DDB/customer.tsv' INTO TABLE customer_tmp";
+            string main_name="customer_tmp";
+            vector<int> sitenames;
+            sitenames.push_back(1);
+            sitenames.push_back(2);
+            vector<string> sqls;
+            sqls.push_back("select id,name from customer_tmp");
+            sqls.push_back("select id,r from customer_tmp");
+            vector<string> table_names;
+            table_names.push_back("customer_1");
+            table_names.push_back("customer_2");
+            cout<<Data_Load_Execute(create_sql, load_sql, main_name,  sitenames, sqls,  table_names);
+            return 0;
+        }
         else if(sql_statement.find("EXIT") != -1)
         {
             cout<<"Bye!"<<endl;

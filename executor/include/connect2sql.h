@@ -34,3 +34,5 @@ auto Mysql_Delete(string sql, int site) ->string;
 
 vector<int> res_getcol1(string res_name); 
 
+auto Select_for_load(string sql,int site,string res_name,int &row_num) ->string;
+

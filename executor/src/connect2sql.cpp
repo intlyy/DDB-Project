@@ -13,7 +13,107 @@ int main()
 */
 
 
+auto Select_for_load(string sql,int site,string res_name,int &row_num) ->string
+{
+    char* DATABASE="test";
+    char* DATABASE1="test";
+    char* DATABASE2="remot_test";
+    MYSQL mysql;
+    int res=-1;
+    int PORT=-1;
+    const char* SOCKET;
 
+    if(site==2)
+    {
+        PORT = 7655;
+        SOCKET = "/var/run/mysqld/mysqld.sock";
+        //DATABASE = DATABASE2;
+    }
+    else
+    {
+        PORT = 7654;
+        SOCKET = "/var/run/mysqld/mysqld.sock";
+        //DATABASE = DATABASE1;
+    }        
+    
+            
+    assert(("非法site",PORT!=-1));
+
+    mysql_init(&mysql);
+    if(mysql_real_connect(&mysql,HOST,USERNAME,PASSWORD,DATABASE,PORT,SOCKET,0))
+    {
+        printf("connect success!\n");
+        /*这句话是设置查询编码为utf8，这样支持中文*/
+        mysql_query(&mysql, "set names utf8");
+
+        string new_sql = "create table ";
+        new_sql.append(res_name);
+        new_sql.append(" ");
+        new_sql.append(sql);
+        const char* p = new_sql.data();
+        /* 执行 */
+        res = mysql_query(&mysql, p);
+        row_num = mysql_affected_rows(&mysql);
+
+        if (res) 
+        {   /*执行失败了*/
+            printf("Error: mysql_query !\n");
+
+            std::cout<< new_sql<<endl;
+            cout<<mysql_error(&mysql)<<endl;
+            return "FAIL";
+        }
+        else 
+        { 
+            /*现在就代表执行成功了*/
+            /* 构建cmd要执行的导出文件命令 */
+            /* 举例：mysqldump -u root -S /home/mysql1/mysql.sock -prootroot test book > book.sql */
+            string command_save = "mysqldump -u ";
+            command_save.append(USERNAME);
+            command_save.append(" -S ");
+            command_save.append(SOCKET);
+            //command_save.append(" -p");
+            //command_save.append(PASSWORD);
+            command_save.append(" ");
+            command_save.append(DATABASE);
+            command_save.append(" ");
+            command_save.append(res_name);
+            command_save.append(" > ");
+            command_save.append(TMPPATH);
+            command_save.append(res_name);
+            command_save.append(".sql");
+            /* 执行 */
+            std::cout<<command_save<<std::endl;
+            const char* q = command_save.data();
+            int tmp=system(q);  
+            assert(("system error!",tmp!=-1 && tmp!=127));
+            std::cout<<"tmp:"<<tmp<<std::endl;
+            /* 构建语句删除原来的表 */
+            string new_sql = "drop table ";
+            new_sql.append(res_name);
+            const char* p = new_sql.data();
+            /* 执行 */
+            res = mysql_query(&mysql, p);
+            
+            if (res) 
+            {   /*现在就代表执行失败了*/
+                printf("Error: mysql release error!\n");
+            }
+            else 
+            { 
+                /*现在就代表执行成功了*/
+            }
+            mysql_close(&mysql);
+            return res_name;
+        }             
+    }
+    else
+    {
+        printf("connect error!");
+        return "FAIL";
+    }
+    
+}
 
 auto Insert(string sql,int site) ->string
 {
@@ -155,6 +255,7 @@ auto Select(string sql,int site,string res_name) ->string
         {   /*执行失败了*/
             printf("Error: mysql_query !\n");
             std::cout<< new_sql<<endl;
+            cout<<mysql_error(&mysql)<<endl;
             return "FAIL";
         }
         else 
