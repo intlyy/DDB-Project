@@ -423,7 +423,63 @@ void res_print(string my_res_name)
     }
             
 }
-auto Load(string sql_create,string sql_load,int site) ->string;
+auto Load(string sql_create,string sql_load,int site) ->string
+{
+    MYSQL conn;
+    int res=-1;
+    int res_load;
+    int PORT=-1;
+    char* DATABASE="test";
+    char* DATABASE2="remot_test";
+    const char* SOCKET;
+
+    if(site==2)
+    {
+        PORT = 7655;
+        SOCKET = "/var/run/mysqld/mysqld.sock";
+        DATABASE = DATABASE2;
+    }
+    else
+    {
+        PORT = 7654;
+        SOCKET = "/var/run/mysqld/mysqld.sock";
+    }        
+    
+
+
+    mysql_init(&conn);
+    if(mysql_real_connect(&conn, HOST, USERNAME, PASSWORD, DATABASE, PORT, SOCKET,CLIENT_LOCAL_FILES))
+    {
+        printf("connect success!\n");
+        const char* p = sql_create.data(); 
+        res=mysql_query(&conn,p);
+        if(res) /*创建数据表失败*/
+        {
+            // printf("error\n");
+            mysql_close(&conn);
+            return "FAILED1";
+        }
+        else /*创建数据表成功*/
+        {
+             printf("OK\n");
+            p = sql_load.data();
+            res_load = mysql_query(&conn,p);
+            //cout<<mysql_error(&conn)<<endl;
+            cout<<mysql_affected_rows(&conn)<<endl;
+            mysql_close(&conn);
+            if(res_load) /*导入数据失败*/
+            {
+                
+                return "FAILED";
+            }
+            else{
+                return "OK";
+            }
+            
+        }
+        
+    }       
+}
 
 auto tmp_load(string tmp_data,int site) ->string
 {
