@@ -1,5 +1,12 @@
 #include "../include/myetcd.h"
 
+void init_etcd(int site_number){
+	etcd::Client client(ENDPOINTS);
+	for(int i = 1; i <= site_number; i++){
+	    set_etcd(&client, FILE_PATH_KEY+std::to_string(i), "/mnt/d/DDB/");
+	}
+}
+
 etcd::Response query_etcd(etcd::Client *client, string key){
 	return client->get(key).get();
 }

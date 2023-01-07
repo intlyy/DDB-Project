@@ -1,5 +1,5 @@
-#ifndef mytree
-#define mytree
+# ifndef TREE_H
+# define TREE_H
 #include<iostream>
 #include<vector>
 #include<string>
@@ -21,7 +21,7 @@ struct QTree {
 };
 struct ETNode{
     int id;
-    size_t vol;//结果数据量大小（以byte为单位  ）
+    size_t vol;
     string res;
     vector<int> children;
     int parent;
@@ -41,6 +41,4 @@ ETNode getroot(ETree tree);
 QTree getsubTree(QTree tree, int  id);
 
 QTNode getnode(QTree tree,int id);
-
-#endif
-
+# endif

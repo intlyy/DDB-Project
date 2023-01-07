@@ -1,5 +1,0 @@
-/home/lyk/myDDB/executor/build/CMakeFiles/rebuild_cache.dir
-/home/lyk/myDDB/executor/build/CMakeFiles/edit_cache.dir
-/home/lyk/myDDB/executor/build/CMakeFiles/main.dir
-/home/lyk/myDDB/executor/build/CMakeFiles/server_main.dir
-/home/lyk/myDDB/executor/build/CMakeFiles/hw_grpc_proto.dir

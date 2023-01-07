@@ -20,6 +20,9 @@ service CallRemoteDB {
   //rpc RemoteInsert (Statement) returns (Result) {}
   rpc RemoteSelect (QueryTree) returns (ExecuteTree) {}
   rpc RemoteFetchFile (ResultPath) returns (stream ResultSet) {}
+  rpc RemotePushFile (stream UploadSet) returns (ResultPath) {}
+  rpc RemoteInsert (Statement) returns (StatementResult) {}
+  rpc RemoteTmpLoad (Statement) returns (StatementResult) {}
 }
 
 // The request message containing the user's name.
@@ -60,5 +63,19 @@ message ResultPath {
 
 message ResultSet {
   bytes data = 1;
+}
+
+message UploadSet {
+  bytes data = 1;
+  string filename = 2;
+}
+
+message Statement {
+  int32 site = 1;
+  string sql = 2;
+}
+
+message StatementResult {
+  string result = 1;
 }
 

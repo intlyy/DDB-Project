@@ -71,6 +71,7 @@ target_link_libraries(main
     mysqlclient
     etcd-cpp-api
     cpprest
+    ${CMAKE_CURRENT_LIST_DIR}/library/libsqlparser.so
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF})

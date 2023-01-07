@@ -73,6 +73,34 @@ class DDBRemoteCallClient {
     }
   }
 
+  std::string RemotePushFile (ResultPath &request) {
+    ClientContext context;
+    ResultPath path;
+    std::unique_ptr<ClientWriter<UploadSet>> writer(stub_->RemotePushFile(&context, &path));
+    UploadSet us;
+    char buffer[BUFFER_SIZE];
+    string filename = request.src_path();
+    std::ifstream infile;
+    infile.open(filename, std::ifstream::in | std::ifstream::binary);
+    while (!infile.eof()) {
+      infile.read(buffer, BUFFER_SIZE);
+      us.set_data(buffer, infile.gcount());
+      us.set_filename(filename);
+      if(!writer->Write(us)) break;
+    }
+    infile.close();
+    writer->WritesDone();
+    Status status = writer->Finish();
+    // Act upon its status.
+    if (status.ok()) {
+	    return "OK";
+    } else {
+      std::cout << status.error_code() << ": " << status.error_message()
+                << std::endl;
+      return "FAIL";
+    }
+  }
+
   std::string RemoteFetchFile (ResultPath &request) {
     ClientContext context;
     std::unique_ptr<ClientReader<ResultSet>> reader(stub_->RemoteFetchFile(&context, request));
@@ -95,12 +123,93 @@ class DDBRemoteCallClient {
                 << std::endl;
       return "FAIL";
     }
-
   }
 
+  std::string RemoteInsert (Statement stat) {
+    std::cout << "client receive insert req, site: " << stat.site() << ", sql: " << stat.sql() << std::endl;
+    ClientContext context;
+    StatementResult stat_res;
+
+    Status status = stub_->RemoteInsert(&context, stat, &stat_res);
+
+    // Act upon its status.
+    std::cout << "status: " << status.ok() <<std::endl;
+    if (status.ok()) {
+	    std::cout << "receive finished.";
+	    return "OK";
+    } else {
+      std::cout << status.error_code() << ": " << status.error_message()
+                << std::endl;
+      std::cout << "RPC failed";
+      return "FAIL";
+    }
+  }
+
+  std::string RemoteTmpLoad (Statement stat) {
+    ClientContext context;
+    StatementResult stat_res;
+
+    Status status = stub_->RemoteTmpLoad (&context, stat, &stat_res);
+
+    // Act upon its status.
+    if (status.ok()) {
+	    std::cout << "receive finished.";
+	    return "OK";
+    } else {
+      std::cout << status.error_code() << ": " << status.error_message()
+                << std::endl;
+      std::cout << "RPC failed";
+      return "FAIL";
+    }
+  }
  private:
   std::unique_ptr<CallRemoteDB::Stub> stub_;
 };
+
+string RPC_Insert(int site, string frag_sql)
+{
+    string target_str = sites[site-1].IP + ":" + std::to_string(sites[site-1].PORT);
+    std::cout << "rpc target is: " << target_str <<std::endl;
+    DDBRemoteCallClient ddbclient(
+      grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials()));
+    Statement stat;
+    stat.set_site(site);
+    stat.set_sql(frag_sql);
+    string execute_result = ddbclient.RemoteInsert(stat);
+    return execute_result;   
+}
+
+string RPC_Local_Tmp_Load(string localname, int site){
+    string target_str = sites[site-1].IP + ":" + std::to_string(sites[site-1].PORT);
+    std::cout << "rpc target is: " << target_str <<std::endl;
+    DDBRemoteCallClient ddbclient(
+      grpc::CreateChannel(target_str, grpc::InsecureChannelCredentials()));
+    etcd::Client etcd_client(ENDPOINTS);
+    string SourcePath = query_etcd(&etcd_client, FILE_PATH_KEY+to_string(site)).value().as_string();
+    string LocalPath = query_etcd(&etcd_client, FILE_PATH_KEY+to_string(LOCALSITE)).value().as_string();
+    if ( SourcePath.empty() || LocalPath.empty()) {
+      cout << "File store path not been set in site " << site <<endl;
+      return "";
+    }
+    SourcePath += localname + ".sql";
+    LocalPath += localname + ".sql";
+    cout << "source path from etcd is: " << SourcePath <<endl;
+    cout << "local path from etcd is: " << LocalPath <<endl;
+    ResultPath rs;
+    rs.set_src_path(SourcePath);
+    rs.set_target_path(LocalPath);
+    string fetch_result = ddbclient.RemotePushFile(rs);
+    if (fetch_result == "OK") {
+      cout << localname << "transfered success!" << endl;
+    } else {
+      cout << localname << "transfered failed!" << endl;
+    }
+    Statement stat;
+    stat.set_site(site);
+    stat.set_sql(localname);
+    string execute_result = ddbclient.RemoteTmpLoad(stat);
+    return execute_result;
+}
 
 void RPC_Data_Select_Execute_Thread(QTree qtree, int site, std::promise<ETree> &resultObj){
     string target_str = sites[site-1].IP + ":" + std::to_string(sites[site-1].PORT);
@@ -195,6 +304,25 @@ class DDBCallRemoteCallServiceImpl final : public CallRemoteDB::Service {
     return Status::OK;
   }
 
+  
+  Status RemotePushFile(ServerContext* context, ServerReader<UploadSet>* reader, ResultPath* reply) override {
+    UploadSet us;
+    const char *data;
+    reader->Read(&us);
+    data = us.data().c_str();
+    string filename = us.filename();
+    std::ofstream outfile;
+    outfile.open(filename, std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+    outfile.write(data, us.data().length());
+    while (reader->Read(&us)){
+      data = us.data().c_str();
+      outfile.write(data, us.data().length());
+    }
+    outfile.close();
+    std::cout << "server handle remote push file call." << std::endl;
+    return Status::OK;
+  }
+
   Status RemoteFetchFile(ServerContext* context, const ResultPath* request,
                   ServerWriter<ResultSet>* writer) override {
     ResultSet rs;
@@ -212,10 +340,35 @@ class DDBCallRemoteCallServiceImpl final : public CallRemoteDB::Service {
     return Status::OK;
   }
 
+  Status RemoteInsert (ServerContext* context, const Statement* request,
+                  StatementResult* reply) override {
+    string res, sql;
+    int site;
+    site = request->site();
+    sql = request->sql();
+    cout << "remote site receive insert req, site: " << site << ", sql: " <<sql <<endl;
+    res = Insert(sql, site);
+    cout << "remote insert finish. result: " << res << endl;
+
+    reply->set_result(res);
+    cout << "Site " << LOCALSITE <<" has handled remote insert request finish!" <<endl;
+    return Status::OK;
+  }
+
+  Status RemoteTmpLoad (ServerContext* context, const Statement* request,
+                  StatementResult* reply) override {
+    string res;
+    res = tmp_load(request->sql(), request->site());
+
+    reply->set_result(res);
+    cout << "Site " << LOCALSITE <<" has handled remote load request finish!" <<endl;
+    return Status::OK;
+  }
 };
 
 
 void RunServer() {
+  init_etcd(SITE_NUMBER);
   std::string server_address("0.0.0.0:54321");
   DDBCallRemoteCallServiceImpl service;
 

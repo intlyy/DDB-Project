@@ -36,7 +36,7 @@
 #include "myetcd.h"
 
 #define BUFFER_SIZE 1024
-#define SITE_NUMBER 2
+#define SITE_NUMBER 4
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -47,6 +47,7 @@ using grpc::Status;
 using grpc::ClientReader;
 using grpc::ClientWriter;
 using grpc::ServerWriter;
+using grpc::ServerReader;
 using ddb::CallRemoteDB;
 using ddb::QueryNode;
 using ddb::QueryTree;
@@ -54,12 +55,15 @@ using ddb::ExecuteNode;
 using ddb::ExecuteTree;
 using ddb::ResultPath;
 using ddb::ResultSet;
+using ddb::UploadSet;
+using ddb::Statement;
+using ddb::StatementResult;
 
 typedef struct SITEINFO {
     string IP;
     int PORT;
 }SITEINFO;
 
-static SITEINFO sites[SITE_NUMBER] = {{"10.77.70.149", 54321}, {"10.77.70.150", 54321}};
+static SITEINFO sites[SITE_NUMBER] = {{"10.77.70.149", 54321}, {"10.77.70.150", 54321},{"10.77.70.157", 54321}, {"10.77.70.149", 54321}};
 
 void RunServer();

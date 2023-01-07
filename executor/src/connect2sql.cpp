@@ -16,17 +16,16 @@ int main()
 auto Select_for_load(string sql,int site,string res_name,int &row_num) ->string
 {
     char* DATABASE="test";
-    char* DATABASE1="test";
-    char* DATABASE2="remot_test";
+    
     MYSQL mysql;
     int res=-1;
     int PORT=-1;
     const char* SOCKET;
 
-    if(site==2)
+    if(site==4)
     {
-        PORT = 7655;
-        SOCKET = "/var/run/mysqld/mysqld.sock";
+        PORT = 3307;
+        SOCKET = "/tmp/mysql3307.sock";
         //DATABASE = DATABASE2;
     }
     else
@@ -45,21 +44,34 @@ auto Select_for_load(string sql,int site,string res_name,int &row_num) ->string
         printf("connect success!\n");
         /*这句话是设置查询编码为utf8，这样支持中文*/
         mysql_query(&mysql, "set names utf8");
-
-        string new_sql = "create table ";
+        string new_sql = "drop table if exists ";
         new_sql.append(res_name);
-        new_sql.append(" ");
-        new_sql.append(sql);
+        new_sql.append(";");
         const char* p = new_sql.data();
-        /* 执行 */
         res = mysql_query(&mysql, p);
+        if (res) 
+        {   /*删除失败了*/
+            printf("Error: mysql_drop !\n");
+
+            std::cout<< new_sql<<endl;
+            cout<<mysql_error(&mysql)<<endl;
+            return "FAIL";
+        }
+
+        string new_sql1 = "create table ";
+        new_sql1.append(res_name);
+        new_sql1.append(" ");
+        new_sql1.append(sql);
+        const char* p1 = new_sql1.data();
+        /* 执行 */
+        res = mysql_query(&mysql, p1);
         row_num = mysql_affected_rows(&mysql);
 
         if (res) 
         {   /*执行失败了*/
             printf("Error: mysql_query !\n");
 
-            std::cout<< new_sql<<endl;
+            std::cout<< new_sql1<<endl;
             cout<<mysql_error(&mysql)<<endl;
             return "FAIL";
         }
@@ -72,8 +84,8 @@ auto Select_for_load(string sql,int site,string res_name,int &row_num) ->string
             command_save.append(USERNAME);
             command_save.append(" -S ");
             command_save.append(SOCKET);
-            //command_save.append(" -p");
-            //command_save.append(PASSWORD);
+            command_save.append(" -p");
+            command_save.append(PASSWORD);
             command_save.append(" ");
             command_save.append(DATABASE);
             command_save.append(" ");
@@ -117,6 +129,7 @@ auto Select_for_load(string sql,int site,string res_name,int &row_num) ->string
 
 auto Insert(string sql,int site) ->string
 {
+    cout<<"local insert in:"<<site<<" "<<sql<<endl;
     MYSQL mysql;
     int res=-1;
     int PORT=-1;
@@ -125,8 +138,9 @@ auto Insert(string sql,int site) ->string
 
     if(site==4)
     {
-        PORT = 7655;
-        SOCKET = "/var/run/mysqld/mysqld.sock";
+        PORT = 3307;
+        SOCKET = "/tmp/mysql3307.sock";
+        //DATABASE = DATABASE2;
     }
     else
     {
@@ -147,12 +161,13 @@ auto Insert(string sql,int site) ->string
         if(res)
         {
             printf("error %d !\n",res);
+            cout<<mysql_error(&mysql)<<endl;
             return "FAILED";
         }
         else
         {
-            printf("success!\n");
-            return "success";
+            printf("OK!\n");
+            return "OK";
         }
     }
     else
@@ -163,7 +178,7 @@ auto Insert(string sql,int site) ->string
 
 }
 
-auto Delete(string sql,int site) ->string;
+auto Delete(string sql,int site) ->string
 {
     MYSQL mysql;
     int res=-1;
@@ -171,10 +186,11 @@ auto Delete(string sql,int site) ->string;
     char* DATABASE="test";
     const char* SOCKET;
 
-    if(site==2)
+    if(site==4)
     {
-        PORT = 7655;
-        SOCKET = "/var/run/mysqld/mysqld.sock";
+        PORT = 3307;
+        SOCKET = "/tmp/mysql3307.sock";
+        //DATABASE = DATABASE2;
     }
     else
     {
@@ -215,17 +231,16 @@ auto Delete(string sql,int site) ->string;
 auto Select(string sql,int site,string res_name) ->string
 {
     char* DATABASE="test";
-    char* DATABASE1="test";
-    char* DATABASE2="remot_test";
     MYSQL mysql;
     int res=-1;
     int PORT=-1;
     const char* SOCKET;
 
-    if(site==2)
+    if(site==4)
     {
-        PORT = 7655;
-        SOCKET = "/var/run/mysqld/mysqld.sock";
+        PORT = 3307;
+        SOCKET = "/tmp/mysql3307.sock";
+        //DATABASE = DATABASE2;
     }
     else
     {
@@ -375,8 +390,15 @@ void res_print(string my_res_name)
                 /*取得結果的行列数*/
                 column = mysql_num_fields(res_ptr);
                 row = mysql_num_rows(res_ptr);
+                printf("查询结果在表%s内\n",my_res_name.c_str());
                 printf("查询到 %d 行 \n", row);
-
+                if(row>10) 
+                {
+                    cout<<"查询结果过多，请输入想查看的行数："<<endl;
+                    int x;
+                    cin>>x;
+                    row = x;
+                }
                 /*输出結果的字段名*/
                 for (i = 0; field = mysql_fetch_field(res_ptr); i++)
                 {
@@ -385,6 +407,7 @@ void res_print(string my_res_name)
                     
                 printf("\n");
 
+                
                 /*按行输出結果*/
                 for (i = 1; i <= row; i++)
                 {
@@ -430,6 +453,7 @@ auto Load(string sql_create,string sql_load,int site) ->string
     int res_load;
     int PORT=-1;
     char* DATABASE="test";
+<<<<<<< Updated upstream
     char* DATABASE2="remot_test";
     const char* SOCKET;
 
@@ -438,20 +462,37 @@ auto Load(string sql_create,string sql_load,int site) ->string
         PORT = 7655;
         SOCKET = "/var/run/mysqld/mysqld.sock";
         DATABASE = DATABASE2;
+=======
+    const char* SOCKET;
+
+    if(site==4)
+    {
+        PORT = 3307;
+        SOCKET = "/tmp/mysql3307.sock";
+        //DATABASE = DATABASE2;
+>>>>>>> Stashed changes
     }
     else
     {
         PORT = 7654;
         SOCKET = "/var/run/mysqld/mysqld.sock";
+<<<<<<< Updated upstream
     }        
     
 
+=======
+    }
+>>>>>>> Stashed changes
 
     mysql_init(&conn);
     if(mysql_real_connect(&conn, HOST, USERNAME, PASSWORD, DATABASE, PORT, SOCKET,CLIENT_LOCAL_FILES))
     {
         printf("connect success!\n");
+<<<<<<< Updated upstream
         const char* p = sql_create.data(); 
+=======
+        const char* p = sql_create.data();
+>>>>>>> Stashed changes
         res=mysql_query(&conn,p);
         if(res) /*创建数据表失败*/
         {
@@ -469,16 +510,27 @@ auto Load(string sql_create,string sql_load,int site) ->string
             mysql_close(&conn);
             if(res_load) /*导入数据失败*/
             {
+<<<<<<< Updated upstream
                 
+=======
+
+>>>>>>> Stashed changes
                 return "FAILED";
             }
             else{
                 return "OK";
             }
+<<<<<<< Updated upstream
             
         }
         
     }       
+=======
+
+        }
+
+    }
+>>>>>>> Stashed changes
 }
 
 auto tmp_load(string tmp_data,int site) ->string
@@ -488,9 +540,11 @@ auto tmp_load(string tmp_data,int site) ->string
     const char* UNIX_SOCKET;
 
     /* 通过站点名称判断使用哪个连接 */
-    if(site == 4){
-        PORT = 7655;
-        UNIX_SOCKET = "/var/run/mysqld/mysqld.sock";
+    if(site==4)
+    {
+        PORT = 3307;
+        UNIX_SOCKET = "/tmp/mysql3307.sock";
+        //DATABASE = DATABASE2;
     }
     else{
         PORT = 7654;
@@ -524,17 +578,17 @@ auto Mysql_Delete(string sql, int site) ->string
 {
      char* DATABASE="test";
      char* DATABASE1="test";
-     char* DATABASE2="remot_test";
      MYSQL mysql;
      int res=-1;
      int PORT=-1;
      const char* SOCKET;
 
-     if(site==2)
-     {
-         PORT = 7655;
-         SOCKET = "/var/run/mysqld/mysqld.sock";
-     }
+     if(site==4)
+    {
+        PORT = 3307;
+        SOCKET = "/tmp/mysql3307.sock";
+        //DATABASE = DATABASE2;
+    }
      else
      {
          PORT = 7654;

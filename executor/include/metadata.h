@@ -1,7 +1,7 @@
-#ifndef _DDB_METADATA_H_
-#define _DDB_METADATA_H_
-//#include <curl.h> 
-//#include <json.h> 
+#ifndef METADATA_H
+#define METADATA_H
+#include <set>
+#include <map>
 #include <iostream>  
 #include <string>
 #include <map> 
@@ -9,31 +9,15 @@
 #include <vector>
 #include <sstream>
 #include <typeinfo>
-
-
-
+# include "myetcd.h"
+#include "utils.h"
 using namespace std;
-//using namespace Json;
-
-// column
-struct ColumnDef {
-	string name;
-	string type;
-	bool null=false;
-	bool key=false;
-	string desc;
-};
-// table 
-struct GDD {
-	string name;
-	vector<ColumnDef> cols;
-};
 // fragment
 struct FragDef {
 	int id;
     int site;
-    string column; //该分片涉及到的column，如果是多个，则用逗号分隔
-	string condition; //分片条件
+    vector<string> column; //该分片涉及到的columns
+	vector<string> condition; //分片条件
     int size; //记录该分片的大小，以byte为单位
 };
 // table-fragment
@@ -41,9 +25,24 @@ struct Fragment {
 	string name;
 	string fragtype; // H/V 
 	int fragnum;
+    set<string> fragcolumns;  //该表涉及分片的列
 	vector<FragDef> frags;
 };
-
+struct ColumnDef{
+    string name;
+    string type;
+    string desc;
+    bool key;
+};
+struct RelationDef{
+    string name;
+    vector<ColumnDef> cols;
+};
+// 每条查询的表结构
+typedef struct QueryTable{
+    string name;
+    set<string> column_names;
+}QueryTable;
 class ZBase64{
 private:
     //Base64编码解码表
@@ -58,25 +57,21 @@ public:
 };
 vector<string> split2list(string info);
 vector<string> getTables();
-vector<string> getTableAttri(string tableName);
-string getTableAttriType(string tableName, string attriName);
-string getTableAttriDesc(string tableName, string attriName);
+vector<string> getTableAttri(etcd::Client* client,string tableName);
+string getTableAttriType(etcd::Client* client,string tableName, string attriName);
+string getTableAttriDesc(etcd::Client* client,string tableName, string attriName);
 string getTableKey(string tableName);
-string getTableFragType(string tableName);
-vector<string> getTableFragH(string tableName);
-int getTableFragNum(string tableName);
-string getTableFragCondition(string tableName, int index);
-string getTableFragCol(string tableName, int index);
-int getTableFragSize(string tableName,int index);
-int getTableFragSite(string tableName,int index);
-bool saveTableToEtcd(GDD table);
-GDD getTableFromEtcd(string tablename);
+string getTableFragType(etcd::Client* client,string tableName);
+vector<string> getTableFragH(etcd::Client* client,string tableName);
+int getTableFragNum(etcd::Client* client,string tableName);
+string getTableFragCondition(etcd::Client* client,string tableName, int index);
+string getTableFragCol(etcd::Client* client,string tableName, int index);
+int getTableFragSize(etcd::Client* client,string tableName,int index);
+int getTableFragSite(etcd::Client* client,string tableName,int index);
+bool saveTableToEtcd(RelationDef table);
+RelationDef getTableFromEtcd(string tablename);
 bool saveFragToEtcd(Fragment frag);
-//Fragment getFragFromEtcd(string tablename);
-//string get_value_from_json(string &res);
-//string toJson(string k);
-bool Insert_Attrvalue(string &key,string &value);
-string etcd_op(string &dt,string &op);
-size_t write_data(void *buffer, size_t size, size_t nmemb, void *stream);
-
-#endif /*_DDB_METADATA_H_*/
+Fragment getFragFromEtcd(string tablename);
+bool Insert_Attrvalue(etcd::Client* client,string &key,string &value);
+map<string,Fragment> GetETCDFragment();
+#endif

@@ -1,0 +1,31 @@
+digraph G {
+0[label=0,label="SELECT customer.id,customer.name FROM customer;",color=red];
+1[label=1,label="SELECT customer.id FROM customer WHERE customer.rank=1;",color=yellow];
+2[label=2,label="SELECT * FROM tree_0_node_1 JOIN tree_0_node_0 USING (id);",color=red];
+1->2;
+0->2;
+3[label=3,label="SELECT orders.book_id,orders.cusomer_id,orders.quantity FROM orders;",color=red];
+4[label=4,label="SELECT orders.book_id,orders.cusomer_id,orders.quantity FROM orders;",color=yellow];
+5[label=5,label="SELECT orders.book_id,orders.cusomer_id,orders.quantity FROM orders;",color=green];
+6[label=6,label="SELECT orders.book_id,orders.cusomer_id,orders.quantity FROM orders;",color=blue];
+7[label=7,label="SELECT * FROM tree_0_node_6 UNION ALL SELECT * FROM tree_0_node_5 UNION ALL SELECT * FROM tree_0_node_4 UNION ALL SELECT * FROM tree_0_node_3;",color=red];
+6->7;
+5->7;
+4->7;
+3->7;
+8[label=8,label="SELECT book.id,book.title FROM book WHERE book.copies>5000;",color=red];
+9[label=9,label="SELECT book.id,book.title FROM book WHERE book.copies>5000;",color=yellow];
+10[label=10,label="SELECT book.id,book.title FROM book WHERE book.copies>5000;",color=green];
+11[label=11,label="SELECT * FROM tree_0_node_10 UNION ALL SELECT * FROM tree_0_node_9 UNION ALL SELECT * FROM tree_0_node_8;",color=red];
+10->11;
+9->11;
+8->11;
+12[label=12,label="SELECT * FROM tree_0_node_2,tree_0_node_7 WHERE tree_0_node_2.id=tree_0_node_7.cusomer_id",color=red];
+2->12;
+7->12;
+13[label=13,label="SELECT * FROM tree_0_node_11,tree_0_node_12 WHERE tree_0_node_11.id=tree_0_node_12.book_id",color=red];
+11->13;
+12->13;
+14[label=14,label="SELECT name,quantity,title FROM tree_0_node_13",color=red];
+13->14;
+}

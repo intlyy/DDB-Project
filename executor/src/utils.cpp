@@ -1,50 +1,85 @@
 #include "../include/utils.h"
-using namespace std;
-
-// // NEED TO DELETE //
-// struct ColumnDef {
-// 	string name;
-// 	string type;
-// 	bool null=false;
-// 	bool key=false;
-// 	string desc;
-// };
-// // table 
-// struct GDD {
-// 	string name;
-// 	vector<ColumnDef> cols;
-// };
-// // NEED TO DELETE // 
-
-string GetBetween(string sql_statement, string start, string end) {
-    if (sql_statement.find(start) == -1 || sql_statement.find(end) == -1) {
-        return "";
+#include <iostream>
+pair<string,string> getsplit(string name, const char word){
+    int pos = name.find_first_of(word);
+    pair<string,string> temp;
+    if(pos != string::npos){
+        temp = make_pair(name.substr(0, pos), name.substr(pos+1, name.size()));
+        return temp;
     }
-    else {
-        int start_loc = sql_statement.find(start) + start.size() + 1;
-        int end_loc = sql_statement.find(end);
-        return sql_statement.substr(start_loc, end_loc-start_loc);
+    else{
+        temp = make_pair("ERROR","ERROR");
+        return temp;
     }
 }
-string GetAfter(string sql_statement, string start) {
-    if (sql_statement.find(start) == -1) {
-        return "";
+vector<string> getsplit2vec(string name,const string word){
+    vector<string> temp;
+    string::size_type pos1, pos2;
+    pos2 = name.find(word);
+    pos1 = 0;
+    while(string::npos != pos2)
+    {
+        temp.emplace_back(name.substr(pos1, pos2-pos1));
+        pos1 = pos2 + word.size();
+        pos2 = name.find(word, pos1);
     }
-    else {
-        int start_loc = sql_statement.find(start) + start.size() + 1;
-        int end_loc = sql_statement.size();
-        return sql_statement.substr(start_loc, end_loc-start_loc);
-    }
+    if(pos1 != name.length())
+        temp.push_back(name.substr(pos1));
+    return temp;
 }
-string GetExactAfter(string sql_statement, string start) {
-    if (sql_statement.find(start) == -1) {
-        return "";
+string unionwherelist(vector<Predicate> whereclause ,int site){
+    int listsize = whereclause.size();
+    if( listsize == 0)return "";
+    else if(listsize == 1){
+        pair<string,string> temp_pair = getsplit(whereclause[0].left_name, '.');
+        temp_pair.first +="_"+to_string(site);
+        whereclause[0].left_name = temp_pair.first + "." +temp_pair.second;
+        return " WHERE " +  whereclause[0].to_string();
     }
-    else {
-        int start_loc = sql_statement.find(start) + start.size();
-        int end_loc = sql_statement.size();
-        return sql_statement.substr(start_loc, end_loc-start_loc);
+    else{
+        string where_stat = " WHERE ";
+        for(int i = 0; i< listsize;i++){
+            pair<string,string> temp_pair = getsplit(whereclause[i].left_name, '.');
+            temp_pair.first +="_"+to_string(site);
+            whereclause[i].left_name = temp_pair.first + "." +temp_pair.second;
+            where_stat += whereclause[i].to_string();
+            if(i<listsize-1)where_stat += " AND ";
+        }
+        return where_stat;
     }
+} 
+string unionvector(vector<string> myvector,string link){
+    string result=myvector[0];
+    for(int i = 1;i<myvector.size();i++){
+        result+=link+myvector[i];
+    }
+    return result;
+}
+std::string justforbeauty(std ::string right){
+    if(right.find("UNION")!=right.npos){
+        return "UNION";
+    }
+    else if(right.find("JOIN")!=right.npos){
+        return "JOIN";
+    }
+    else if(right.find("WHERE")!=right.npos){
+        return "SELECTION";
+    }
+    else return "PROJECTION";
+} 
+void splitString(const std::string& s, std::vector<std::string>& v, const std::string& c)
+{
+    std::string::size_type pos1, pos2;
+    pos2 = s.find(c);
+    pos1 = 0;
+    while(std::string::npos != pos2)
+    {
+        v.push_back(s.substr(pos1, pos2-pos1));
+        pos1 = pos2 + c.size();
+        pos2 = s.find(c, pos1);
+    }
+    if(pos1 != s.length())
+        v.push_back(s.substr(pos1));
 }
 string GetBefore(string sql_statement, string end) {
     if (sql_statement.find(end) == -1) {
@@ -79,686 +114,191 @@ vector<string> GetList(string Line, string split, string stop) {
     }
     return TableList;
 }
-void Traverse(vector<string> input) {
-    int size = input.size();
-    for (int i = 0; i < size; i++) {
-        cout << input[i] << "/" << endl;
-    }
-}
-string GetTableName(string sql_statement) {
-    if (sql_statement.find("WHERE") == -1) {
-        return GetBetween(sql_statement, "FROM", ";");
+string GetBetween(string sql_statement, string start, string end) {
+    if (sql_statement.find(start) == -1 || sql_statement.find(end) == -1) {
+        return "";
     }
     else {
-        return GetBetween(sql_statement, "FROM", " WHERE");
+        int start_loc = sql_statement.find(start) + start.size() + 1;
+        int end_loc = sql_statement.find(end);
+        return sql_statement.substr(start_loc, end_loc-start_loc);
     }
-}
-vector<string> GetTableList(string sql_statement) {
-    return GetList(GetTableName(sql_statement),","," ");
-}
-string GetSelectColumnName(string sql_statement) {
-    return GetBetween(sql_statement, "SELECT", "FROM");
-}
-vector<string> GetSelectColumnList(string sql_statement) {
-    return GetList(GetSelectColumnName(sql_statement),","," ");
-}
-string GetCondition(string sql_statement) {
-    // return GetAfter(sql_statement,"WHERE");
-    return GetBetween(sql_statement,"WHERE",";");
-}
-vector<string> GetConditionList(string sql_statement) {
-    string condition = GetCondition(sql_statement);
-    if (condition != " " && condition != "") {
-        return GetList(condition," and ",";");
-    }
-    else {
-        vector<string> condition_list;
-        condition_list.clear();
-        return condition_list;
-    }
-}
-string GetTableFromColumn(string column, vector<string> TableList) {
-    int size = TableList.size();
-    for (int i = 0; i < size; i++) {
-        if (column.find(TableList[i]) != -1){
-            return TableList[i];
-        }
-    }
-    return "GetTableFromColumn ERROR!";
-}
-vector<string> GetColumnFromCondition(string condition, vector<string> TableList) {
-    vector<string> items;
-    vector<string> column_list;
-    if (condition.find('=') != -1) {
-        items = GetList(condition,"="," ");
-    }
-    else if (condition.find('>') != -1) {
-        items = GetList(condition,">"," ");
-    }
-    else if (condition.find('<') != -1) {
-        items = GetList(condition,"<"," ");
-    }
-    else if (condition.find(">=") != -1) {
-        items = GetList(condition, ">="," ");
-    }
-    else if (condition.find("<=") != -1) {
-        items = GetList(condition, "<=", " ");
-    }
-    else {
-        column_list.clear();
-        return column_list;
-    }
-    for (int i = 0; i < items.size(); i++) {
-        if(GetTableFromColumn(items[i], TableList) != "GetTableFromColumn ERROR!") {
-            column_list.push_back(items[i]);
-        }
-    }
-    return column_list;
-}
-vector<string> GetColumnListFromConditionList(vector<string> ConditionList, vector<string> TableList) {
-    vector<string> ColumnList;
-    for(int i = 0; i < ConditionList.size(); i++) {
-        vector<string> tmp = GetColumnFromCondition(ConditionList[i], TableList);
-        ColumnList.insert(ColumnList.end(), tmp.begin(), tmp.end());
-    }
-    return ColumnList;
-}
-vector<string> GetAllColumnList(string sql_statement) {
-    vector<string> select_column_list = GetSelectColumnList(sql_statement);
-    vector<string> condition_list = GetConditionList(sql_statement);      //得到选择条件也就是where后面  and前或者后
-    vector<string> column_list = GetColumnListFromConditionList(condition_list, GetTableList(sql_statement));
-    // cout << "select_column_list IN GetAllColumnList >>> " << endl;
-    // Traverse(select_column_list);
-    // cout << "condition_list IN GetAllColumnList >>> " << endl;
-    // Traverse(condition_list);
-    // cout << "column_list IN GetAllColumnList >>> " << endl;
-    // Traverse(column_list);
-    column_list.insert(column_list.end(),select_column_list.begin(),select_column_list.end());
-    return column_list;
-}
-vector<string> GetAllDifferentColumnList(string sql_statement) {
-    vector<string> column_list = GetAllColumnList(sql_statement);
-    vector<string> different_list;
-    different_list.clear();
-    for (int i = 0; i < column_list.size(); i++) {
-        if (!JudgeHit(different_list,column_list[i])) {
-            different_list.push_back(column_list[i]);
-        }
-    }
-    return different_list;
-}
-vector<string> GetAllDifferentTreeNodeColumnList(string sql_statement, string table_1, string treenode1, string table_2, string treenode2) {
-    vector<string> different_list;
-    different_list = GetAllDifferentColumnList(sql_statement);
-    vector<string> differenttreenodecollumnlist;
-    cout << "table_1 :" << table_1 << endl;
-    cout << "table_2 :" << table_2 << endl;
-    for (int i = 0; i < different_list.size(); i++) {
-        if (GetBefore(different_list[i],".") == table_1) {
-            differenttreenodecollumnlist.push_back(treenode1 + "." + GetExactAfter(different_list[i],"."));
-        }
-        else if (GetBefore(different_list[i],".") == table_2) {
-            differenttreenodecollumnlist.push_back(treenode2 + "." + GetExactAfter(different_list[i],"."));
-        }
-    }
-    return differenttreenodecollumnlist;
-}
-
-// vector<string> GetCollumnsSelect(vector<string> table_list, vector<TCC> TCCList) {
-//     vector<string> collumn_list;
-//     for (int i = 0; i < table_list.size(); i++) {
-//         for (int j = 0; j < TCCList.size(); j++) {
-//             if (TCCList[j].table_name == table_list[i]) {
-//                 for (int k = 0; k < TCCList[j].column_list.size(); k++ ){
-//                     string item = GetExactAfter(TCCList[j].column_list[k],".");
-//                     collumn_list.push_back(item);
-//                 }
-                
-//             }
-//         }
-//     }
-//     collumn_list = GetCleanList(collumn_list);
-//     return collumn_list;
-// }
-vector<string> GetAllTreeNodeCollumnList(string sql_statement, string table_1, string treenode1, string table_2, string treenode2) {
-    vector<string> treenodecollumnlist;
-    vector<string> allcollumnlist = GetAllColumnList(sql_statement);
-    for (int i = 0; i < allcollumnlist.size(); i++) {
-        if (GetBefore(allcollumnlist[i],".") == table_1) {
-            treenodecollumnlist.push_back(treenode1 + "." + GetExactAfter(allcollumnlist[i],"."));
-        }
-        else if (GetBefore(allcollumnlist[i],".") == table_2) {
-            treenodecollumnlist.push_back(treenode2 + "." + GetExactAfter(allcollumnlist[i],"."));
-        }
-    } 
-    return treenodecollumnlist;
-}
-vector<string> GetAllData(string sql_statement) {
-    vector<string> ConditionList = GetConditionList(sql_statement);
-    vector<string> DataList;
-    for (int i = 0; i < ConditionList.size(); i++) {
-        string condition = ConditionList[i];
-        if(GetColumnFromCondition(condition, GetTableList(sql_statement)).size() == 2) {
-            cout << " THE JOIN SENTENCE " << endl;
-        }
-        else if(GetColumnFromCondition(condition, GetTableList(sql_statement)).size() == 1) {
-            cout << " THE SIGMA SENTENCE " << endl;
-            
-        }
-        else {
-            cout << " CONDITION PARSING ERROR " << endl;
-        }
-    }
-    return DataList;
-}
-int GetTCLoc(string table, string column) {
-    return 0;
-}
-string GetPureColumnFromColumn(string column) {
-    int pure_column_loc = column.find(".")+1;
-    string pure_column = column.substr(pure_column_loc, column.size() - pure_column_loc);
-    return pure_column;
-}
-string Link(vector<string> input, string devide) {
-    string output = input[0];
-    for (int i = 1; i < input.size(); i++) {
-        output += devide + input[i];
-    }
-    return output;
 }
 void Traversefrags(vector<FragDef> frags) {
     for (int i = 0; i < frags.size(); i++) {
         cout << "frags[" << to_string(i) << "] >>>" << endl;
-        cout << frags[i].column << "/" << endl;
-        cout << frags[i].condition << "/" << endl;
+        for(auto &col:frags[i].column){
+            cout <<col<< "/" << endl;
+        }
+        for(auto &con:frags[i].condition){
+            cout <<con<< "/" << endl;
+        }
         cout << frags[i].id << "/" << endl;
         cout << frags[i].site << "/" <<endl;
         cout << frags[i].size << "/" << endl;
     }
 }
-void TraverseFragment(Fragment fragment) {
-    cout << fragment.name << endl;
-    cout << fragment.fragtype << endl;
-    cout << fragment.fragnum << endl;
-    Traversefrags(fragment.frags);
+string type2string(hsql::ColumnType coltype){
+    switch(coltype.data_type){
+        case hsql::DataType::CHAR:
+            return "CHAR" + string("("+to_string(coltype.length)+")");
+            break;
+        case hsql::DataType::INT:
+            return "INT";
+            break;
+        case hsql::DataType::DOUBLE:
+            return "DOUBLE";
+            break;
+        case hsql::DataType::VARCHAR:
+            return "VARCHAR" + string("("+to_string(coltype.length)+")");
+            break;
+        default:
+            return "UNKNOWN";
+    }
+
 }
-map<string,Fragment> GetETCDFragment() {
-    map<string,Fragment> FragmentMap;
-    Fragment fragment_tmp;
-    vector<FragDef> frags_tmp;
-    FragDef frag_tmp;
-
-    fragment_tmp.name = "customer";
-    fragment_tmp.fragtype = "V";
-    fragment_tmp.fragnum = 2;
-    fragment_tmp.frags.clear();
-    frag_tmp.id = 1;
-    frag_tmp.site = 1;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "customer.idANDcustomer.name";
-    frag_tmp.column = "customer.id,customer.name";
-    fragment_tmp.frags.push_back(frag_tmp);
-    frag_tmp.id = 2;
-    frag_tmp.site = 2;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "customer.idANDcustomer.rank";
-    frag_tmp.column = "customer.id,customer.rank";
-    fragment_tmp.frags.push_back(frag_tmp);
-    FragmentMap["customer"] = fragment_tmp;
-
-    fragment_tmp.name = "orders";
-    fragment_tmp.fragtype = "H";
-    fragment_tmp.fragnum = 4;
-    fragment_tmp.frags.clear();
-    frag_tmp.id = 1;
-    frag_tmp.site = 1;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "orders.customer_id<307000ANDorders.customer_id<215000";
-    frag_tmp.column = "orders.customer_id,orders.customer_id";
-    fragment_tmp.frags.push_back(frag_tmp);
-    frag_tmp.id = 2;
-    frag_tmp.site = 2;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "orders.customer_id<307000ANDorders.book_id>=215000";
-    frag_tmp.column = "orders.customer_id,orders.customer_id";
-    fragment_tmp.frags.push_back(frag_tmp);
-    frag_tmp.id = 3;
-    frag_tmp.site = 3;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "orders.customer_id>=307000ANDorders.book_id<215000";
-    frag_tmp.column = "orders.customer_id,orders.customer_id";
-    fragment_tmp.frags.push_back(frag_tmp);
-    frag_tmp.id = 4;
-    frag_tmp.site = 4;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "orders.cusomer_id>=307000ANDorders.book_id>=215000";
-    frag_tmp.column = "orders.customer_id,orders.customer_id";
-    fragment_tmp.frags.push_back(frag_tmp);
-    FragmentMap["orders"] = fragment_tmp;
-
-    fragment_tmp.name = "publisher";
-    fragment_tmp.fragtype = "H";
-    fragment_tmp.fragnum = 4;
-    fragment_tmp.frags.clear();
-    frag_tmp.id = 1;
-    frag_tmp.site = 1;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "publisher.id<104000ANDpublisher.nation='PRC'";
-    frag_tmp.column = "publisher.id,publisher.nation";
-    fragment_tmp.frags.push_back(frag_tmp);
-    frag_tmp.id = 2;
-    frag_tmp.site = 2;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "publisher.id<104000ANDpublisher.nation='USA'";
-    frag_tmp.column = "publisher.id,publisher.nation";
-    fragment_tmp.frags.push_back(frag_tmp);
-    frag_tmp.id = 3;
-    frag_tmp.site = 3;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "publisher.id>=104000ANDpublisher.nation='PRC'";
-    frag_tmp.column = "publisher.id,publisher.nation";
-    fragment_tmp.frags.push_back(frag_tmp);
-    frag_tmp.id = 4;
-    frag_tmp.site = 4;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "publisher.id>=104000ANDpublisher.nation='USA'";
-    frag_tmp.column = "publisher.id,publisher.nation";
-    fragment_tmp.frags.push_back(frag_tmp);
-    FragmentMap["publisher"] = fragment_tmp;
-
-    fragment_tmp.name = "book";
-    fragment_tmp.fragtype = "H";
-    fragment_tmp.fragnum = 4;
-    fragment_tmp.frags.clear();
-    frag_tmp.id = 1;
-    frag_tmp.site = 1;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "book.id<205000";
-    frag_tmp.column = "book.id";
-    fragment_tmp.frags.push_back(frag_tmp);
-    frag_tmp.id = 2;
-    frag_tmp.site = 2;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "book.id>=205000ANDbook.id<210000";
-    frag_tmp.column = "book.id,book.id";
-    fragment_tmp.frags.push_back(frag_tmp);
-    frag_tmp.id = 3;
-    frag_tmp.site = 3;
-    frag_tmp.size = 0;
-    frag_tmp.condition = "book.id>=210000";
-    frag_tmp.column = "book.id";
-    fragment_tmp.frags.push_back(frag_tmp);
-    FragmentMap["book"] = fragment_tmp;
-    return FragmentMap; 
-}
-map<string,string> GetETCDTableKey() {
-    map<string,string> TableKeyMap;
-    TableKeyMap["customer"] = "id";
-    TableKeyMap["orders"] = "customer_id";
-    TableKeyMap["publisher"] = "id";
-    TableKeyMap["book"] = "id";
-    return TableKeyMap;
-}
-map<string,GDD> GetETCDGDD() {
-    map<string,GDD> GDDMap;
-    GDD gdd_tmp;
-    ColumnDef columndef;
-    vector<ColumnDef> columndef_list;
-
-    gdd_tmp.name = "customer";
-    columndef_list.clear();
-    
-    columndef.name="id";
-    columndef.type="int(24)";
-    columndef.key=true;
-    columndef_list.push_back(columndef);
-
-    columndef.name="name";
-    columndef.type="char(100)";
-    columndef.key=false;
-    columndef_list.push_back(columndef);
-
-    columndef.name="rank";
-    columndef.type="char(100)";
-    columndef.key=false;
-    columndef_list.push_back(columndef);
-    gdd_tmp.cols=columndef_list;
-    GDDMap["customer"] = gdd_tmp;
-
-    gdd_tmp.name = "orders";
-    columndef_list.clear();
-
-    columndef.name="customer_id";
-    columndef.type="int(24)";
-    columndef.key=true;
-    columndef_list.push_back(columndef);
-
-    columndef.name="book_id";
-    columndef.type="int(24)";
-    columndef.key=false;
-    columndef_list.push_back(columndef);
-
-    columndef.name="quantity";
-    columndef.type="int(24)";
-    columndef.key=false;
-    columndef_list.push_back(columndef);
-    gdd_tmp.cols = columndef_list;
-    GDDMap["orders"] = gdd_tmp;
-
-    gdd_tmp.name="publisher";
-    columndef_list.clear();
-
-    columndef.name="id";
-    columndef.type="char(100)";
-    columndef.key=true;
-    columndef_list.push_back(columndef);
-
-    columndef.name="name";
-    columndef.type="char(100)";
-    columndef.key=false;
-    columndef_list.push_back(columndef);
-    
-    columndef.name="nation";
-    columndef.type="char(100)";
-    columndef.key=false;
-    columndef_list.push_back(columndef);
-
-    gdd_tmp.cols=columndef_list;
-    GDDMap["publisher"]=gdd_tmp;
-
-    gdd_tmp.name="book";
-    columndef_list.clear();
-
-    columndef.name="id";
-    columndef.type="int(24)";
-    columndef.key=true;
-    columndef_list.push_back(columndef);
-
-    columndef.name="title";
-    columndef.type="char(100)";
-    columndef.key=false;
-    columndef_list.push_back(columndef);
-
-    columndef.name="authors";
-    columndef.type="char(100)";
-    columndef.key=false;
-    columndef_list.push_back(columndef);
-
-    columndef.name="publisher_id";
-    columndef.type="int(24)";
-    columndef.key=false;
-    columndef_list.push_back(columndef);
-
-    columndef.name="copies";
-    columndef.type="int(24)";
-    columndef.key=false;
-    columndef_list.push_back(columndef);
-    gdd_tmp.cols=columndef_list;
-    GDDMap["book"] = gdd_tmp;
-    return GDDMap;
-}
-void TraverseGDD(GDD gdd){
-    cout << gdd.name << "/" << endl;
-    TraverseGDDCol(gdd.cols);
-}
-void TraverseGDDCol(vector<ColumnDef> cols) {
-    for (int i = 0; i < cols.size(); i++) {
-        cout << cols[i].name << "/" << endl;
-        cout << cols[i].type << "/" << endl;
+void DrawTree(vector<QTNode> Nodes) {
+    ofstream out("draw.dot");
+    int count = 1;
+    std::string color;
+    if (out.is_open()) {
+        out << "digraph G {" << endl;
+        for (int i = 0; i <Nodes.size(); i++) { 
+            string item = to_string(Nodes[i].id) + "[label=" + to_string(Nodes[i].id);
+            item += ", shape=box";
+            item = item + ",label=\"" + Nodes[i].sql_statement + "\"";
+            int site = Nodes[i].site;
+            switch (site) {
+                case 1:
+                    color = ",color=red];";
+                    break;
+                case 2:
+                    color = ",color=black];";
+                    break;
+                case 3:
+                    color = ",color=green];";
+                    break;
+                case 4:
+                    color = ",color=blue];";
+                    break;
+            }
+            out << item + color << endl;
+            if(Nodes[i].children.size() == 0){
+                std::vector<std::string> meta_string;
+                splitString(Nodes[i].sql_statement, meta_string," ");
+                if(meta_string[3][meta_string[3].length()-1] == ';')meta_string[3][meta_string[3].length()-1] = ' ';
+                else meta_string[3] = meta_string[3] + " ";
+                out<<to_string(Nodes.size() + count ) + "[label=" + to_string(Nodes.size() + count ) 
+                +", shape=box" + ",label=\""+ meta_string[3] + "site:" +to_string(Nodes[i].site) + "\"" + color<<endl;
+                count++;
+                string tmp = to_string(Nodes[i].id) +"->" + to_string(Nodes.size() + count - 1) + ";";
+                out << tmp << endl;
+            }
+            for (int j = 0; j < Nodes[i].children.size(); j++) {
+                string tmp = to_string(Nodes[i].id) +"->" + to_string(Nodes[i].children[j]) + ";";
+                out << tmp << endl;
+            }
+        }
+        out << "}" << endl;
+        out.close();
+    }
+    else {
+        cout << "ERROR : draw.dot is not open" << endl;
     }
 }
-string GetTableListFromInsert(string sql_statement) {
-    string table_name = GetBetween(sql_statement, "TABLE"," (");
-    return table_name;
-}
-vector<string> GetColumnListFromInsert(string sql_statement,string table_name) {
-    string column_name;
-    column_name = GetBetween(sql_statement,table_name, " VALUES");
-    column_name = GetBetween(column_name,"("," )");
-    vector<string> column_list = GetList(column_name,",",";");
-    for (int i = 0; i < column_list.size(); i++) {
-        column_list[i] = table_name + "." +column_list[i]; 
+void DrawTree2(vector<QTNode> Nodes) {
+    ofstream out("drawtree.dot");
+    if (out.is_open()) {
+        out << "digraph G {" << endl;
+        for (int i = 0; i < Nodes.size(); i++) { // id site sql_statement child
+            string item = to_string(Nodes[i].id) + "[label=" + to_string(Nodes[i].id);
+            item = item + ",label=\"" + Nodes[i].sql_statement + "\"";
+            int site = Nodes[i].site;
+            switch (site) {
+                case 1:
+                    item = item + ",color=red];";
+                    break;
+                case 2:
+                    item = item + ",color=yellow];";
+                    break;
+                case 3:
+                    item = item + ",color=green];";
+                    break;
+                case 4:
+                    item = item + ",color=blue];";
+                    break;
+            }
+            out << item << endl;
+            for (int j = 0; j < Nodes[i].children.size(); j++) {
+                string tmp = to_string(Nodes[i].children[j])+ "->"+to_string(Nodes[i].id)+";";
+                out << tmp << endl;
+            }
+        }
+        out << "}" << endl;
+        out.close();
     }
-    return column_list;
+    else {
+        cout << "ERROR : drawtree.gv is not open" << endl;
+    }
 }
-vector<string> GetValueListFromInsert(string sql_statement) {
-    string value_name;
-    value_name = GetBetween(sql_statement, "VALUES",";");
-    value_name = GetBetween(value_name,"("," )");
-    vector<string> value_list = GetList(value_name,",",";");
-    return value_list;
-}
-bool JudgeHit(vector<string> BigList, string oneitem) {
-    for (int i = 0; i < BigList.size(); i++) {
-        if (oneitem == BigList[i]) {
+bool iscontain(string op1, string value1, string op2, string value2){
+    //1是否包含2
+    double num1 = stod(value1);
+    double num2 = stod(value2);
+    if(op1 == ">="){
+        if(op2 == ">=" || op2 == ">" ){
             return true;
         }
-    }
-    return false;
-}
-bool JudgeHit2 (vector<string> FirstList, vector<string> SecondList) {
-    for (int i = 0; i < FirstList.size(); i++) {
-        for (int j = 0; j < SecondList.size(); j++) {
-            if (FirstList[i] == SecondList[j]) {
-                return true;
-            }
+        else if(op2 == "<=" || op2 =="="){
+            if(num1 > num2)return false;
+            else return true;
+        }
+        else if(op2 == "<"){
+            if(num1 < num2)return true;
+            else return false;
         }
     }
-    return false;
-}
-int GetLocateHit(vector<string> BigList, string oneitem) {
-    if (JudgeHit(BigList,oneitem)) {
-        for (int i = 0; i < BigList.size(); i++) {
-            if (oneitem == BigList[i]) {
-                return i;
-            }
+    else if(op1 == "<="){
+        if(op2 == "<=" || op2 == "<" ){
+            return true;
+        }
+        else if(op2 == ">=" || op2 =="="){
+            if(num1 < num2)return false;
+            else return true;
+        }
+        else if(op2 == ">"){
+            if(num1 > num2)return true;
+            else return false;
         }
     }
-    cout << "CANT HIT" << endl;
-    return 0;
-}
-bool Judge(vector<string> condition_list, vector<string> condition_column_list, vector<string> insert_column_list, vector<string> insert_value_list) {
-    if (condition_list.size() !=condition_column_list.size()) {
-        Traverse(condition_list);
-        Traverse(condition_column_list);
-        cout << "ERROR IN Judge" << endl;
+    else if(op1 == ">"){
+        if(op2 == ">=" || op2 == ">" ){
+            return true;
+        }
+        else if(op2 == "<=" || op2 =="="){
+            if(num1 >= num2)return false;
+            else return true;
+        }
+        else if(op2 == "<"){
+            if(num1 < num2)return true;
+            else return false;
+        }
+    }
+    else if(op1 == "<"){
+        if(op2 == "<=" || op2 == "<" ){
+            return true;
+        }
+        else if(op2 == ">=" || op2 =="="){
+            if(num1 <= num2)return false;
+            else return true;
+        }
+        else if(op2 == ">"){
+            if(num1 > num2)return true;
+            else return false;
+        }
+    }
+    else{
+        cout<<"ERROR"<<endl;
         return false;
     }
-    // cout << "condition_list>>>" << endl;
-    // Traverse(condition_list);
-    // cout << "delete_column_list>>" << endl;
-    // Traverse(insert_column_list);
-
-    cout << "condition_list>>>" << endl;
-    Traverse(condition_list);
-    cout << "condition_column_list>>>" << endl;
-    Traverse(condition_column_list);
-    cout << "insert_column_list>>>" << endl;
-    Traverse(insert_column_list);
-    cout << "insert_value_list>>>" << endl;
-    Traverse(insert_value_list); 
-
-    for (int i = 0; i < condition_list.size(); i++) {
-        string value;
-        cout << i << "'s condition" << endl; 
-        if (JudgeHit(insert_column_list,condition_column_list[i])){ 
-            int loc = GetLocateHit(insert_column_list,condition_column_list[i]);
-            value = insert_value_list[loc];
-            cout << "value :" << value << endl;
-            cout << "loc :" << loc << endl; 
-        }
-
-        // condition
-        string condition_value;
-        if (condition_list[i].find(">=") != -1) {
-            cout << ">=" << endl;
-            condition_value = GetExactAfter(condition_list[i],">=");
-            if (condition_value.find("'") == -1 && value.find("'") == -1) {
-                int condition_value_int = stoi(condition_value);
-                int value_int = stoi(value);
-                if (value_int < condition_value_int) {
-                    return false;
-                }
-            }
-            else {
-                return false;
-            }
-        }
-        else if (condition_list[i].find("<=") != -1) {
-            cout << "<=" << endl;
-            condition_value = GetExactAfter(condition_list[i],"<=");
-            if (condition_value.find("'") == -1 && value.find("'") == -1) {
-                int condition_value_int = stoi(condition_value);
-                int value_int = stoi(value);
-                if (value_int > condition_value_int) {
-                    return false;
-                }
-            }
-            else {
-                return false;
-            }
-        }
-        
-        else if (condition_list[i].find(">") != -1) {
-            cout << ">" << endl;
-            condition_value = GetExactAfter(condition_list[i],">");
-            if (condition_value.find("'") == -1 && value.find("'") == -1) {
-                int condition_value_int = stoi(condition_value);
-                int value_int = stoi(value);
-                if (value_int <= condition_value_int) {
-                    return false;
-                }
-            }
-            else {
-                return false;
-            }
-        }
-        else if (condition_list[i].find("<") != -1) {
-            cout << "<" << endl;
-            condition_value = GetExactAfter(condition_list[i],"<");
-            if (condition_value.find("'") == -1 && value.find("'") == -1) {
-                int condition_value_int = stoi(condition_value);
-                int value_int = stoi(value);
-                cout << "condition_value_int :" << condition_value_int << endl;
-                cout << "value_int :" << value_int << endl;
-                if (value_int >= condition_value_int) {
-                    return false;
-                }
-            }
-            else {
-                return false;
-            }
-        }
-        else if (condition_list[i].find("=") != -1) {
-            cout << "=" << endl;
-            condition_value = GetExactAfter(condition_list[i],"=");
-            if (condition_value != value) {
-                return false;
-            }
-        }
-        
-        else {
-            cout << "ERROR IN Judge: condition INVALID" << endl;
-            return false;
-        }
-    }
-    return true;
-}
-string GetValue(vector<string> column_in_frag_list, vector<string> value_list, vector<string> column_list) {
-    string value = "";
-    vector<string> value_list_get;
-    if (column_list.size() != value_list.size()) {
-        cout << "ERROR IN GetValue " << endl;
-        return value;
-    }
-    for (int i = 0; i < column_list.size(); i++) {
-        int loc = GetLocateHit(column_in_frag_list,column_list[i]);
-        value_list_get.push_back(value_list[loc]);
-    }
-    value = Link(value_list_get,",");
-    return value;
-}
-string GetInsetItem(vector<string> column_list, vector<string> value_list) {
-    string sql_statement = "(";
-    if (column_list.size() != value_list.size()) {
-        cout << "ERROR IN GetInsertItem" << endl;
-        return sql_statement;
-    }
-    for (int i = 0; i < column_list.size(); i++) {
-        column_list[i] = GetExactAfter(column_list[i],".");
-    }
-    sql_statement += Link(column_list,",");
-    sql_statement += ") VALUES (";
-    sql_statement += Link(value_list,",");
-    sql_statement += ")";
-    return sql_statement;
-}
-
-void trim(string &s) {
-    if( !s.empty()) {
-        s.erase(0,s.find_first_not_of(" "));
-        s.erase(s.find_last_not_of(" ") + 1);
-    }
- }
-
-string Getall_collumn(string table_1,string treenode1,string table_2,string treenode2) {
-    string all_collumn;
-    vector<string> collumn_list1;
-    vector<string> collumn_list2;
-    collumn_list1 = GetCollumnListOfTable(table_1);
-    for (int i = 0; i < collumn_list1.size(); i++) {
-        collumn_list1[i] = treenode1 + "." + collumn_list1[i];
-    }
-    collumn_list2 = GetCollumnListOfTable(table_2);
-    for (int i = 0; i < collumn_list2.size(); i++) {
-        collumn_list2[i] = treenode2 + "." + collumn_list2[i];
-    }
-    all_collumn = Link(collumn_list1,",")+",";
-    all_collumn += Link(collumn_list2,",");
-    return all_collumn;
-}
-vector<string> GetCollumnListOfTable(string table) {
-    vector<string> collumn_list;
-    map<string,GDD> GDDMap = GetETCDGDD();
-    GDD gdd = GDDMap[table];
-    TraverseGDD(gdd);
-    cout << "gdd.cols.size :" << gdd.cols.size() << endl;
-    for (int i = 0; i < gdd.cols.size(); i++) {
-        cout << gdd.cols[i].name << "/" << endl;
-        collumn_list.push_back(gdd.cols[i].name);
-    }
-    return collumn_list;
-}
-string GetTreeNode(int treeid,int nodeid) {
-    string treenode;
-    treenode = "tree_" + to_string(treeid) + "_node_" + to_string(nodeid);
-    return treenode;
-}
-vector<string> GetAllDifferentCollumnListOfTable(string sql_statement, string table_name) {
-    vector<string> differentcollumn_list;
-    vector<string> table_collumn_list;
-    map<string,GDD> GDDMap = GetETCDGDD();
-    differentcollumn_list = GetAllDifferentColumnList(sql_statement);
-    GDD gdd_tmp = GDDMap[table_name];
-    for (int i = 0; i < differentcollumn_list.size(); i++) {
-        if (GetBefore(differentcollumn_list[i],".") == table_name) {
-            table_collumn_list.push_back(GetExactAfter(differentcollumn_list[i],"."));
-        }
-    }
-    return table_collumn_list;
-}
-vector<string> GetCleanList(vector<string> input) {
-    vector<string> output;
-    output.clear();
-    vector<int> locates;
-    for (int i = 0; i < input.size(); i++) {
-        if (!JudgeHit(output, input[i])) {
-            output.push_back(input[i]);
-        }
-        else {
-            int locate = GetLocateHit(output, input[i]);
-            output.erase(output.begin() + locate );
-        }
-    }
-    return output;
 }

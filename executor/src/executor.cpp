@@ -4,7 +4,12 @@ void Data_Insert_Delete_Thread(int site, string frag_sql, std::promise<string> &
     /* 判断一下是否为本地，并执行对应sql语句 */
     string frag_res;
     string res_output;
-    if(site == LOCALSITE || site == LOCALSITE2){
+    if(site == LOCALSITE ){
+        frag_res = Insert(frag_sql, site);
+        printf("localsite.\n%s\n", frag_res.data());
+    }
+    else if(site == LOCALSITE2)
+    {
         frag_res = Insert(frag_sql, site);
         printf("localsite.\n%s\n", frag_res.data());
     }
@@ -13,12 +18,12 @@ void Data_Insert_Delete_Thread(int site, string frag_sql, std::promise<string> &
         //此函数需要实现！在站点site上调用Insert(frag_sql, site)并返回结果
         frag_res = RPC_Insert(site, frag_sql);
         
-        // printf("success .");
+        printf("success .");
         // printf("%s", frag_res.data());
-        // cout << frag_res;
+        cout << frag_res;
     }
     // frag_res = "OK";
-    if(frag_res == "OK"){ /* 目标site上存储成功 */
+    if(frag_res == "OK" || frag_res == "success"){ /* 目标site上存储成功 */
         /* 构造输出语句 */
         res_output = "OK on site ";
         string s=to_string(site);
@@ -30,6 +35,7 @@ void Data_Insert_Delete_Thread(int site, string frag_sql, std::promise<string> &
     }
     else{
         // printf("FAIL TO LOAD %s", frag_name);
+	cout << "frag_res: " << frag_res << endl;
         res_output = "FAIL on site ";
         string s=to_string(site);
         res_output.append(s);
@@ -58,6 +64,7 @@ string Data_Insert_Delete_Execute(vector<int> sitenames, vector<string> sqls)
     for(i = 0; i < sitenames.size(); i++){           
         /* 开启一个分片并在对应site存储的线程，通过传promise类给线程，让线程把结果给future类，实现结果返回 */
         load_sentences[i] = resultObjs[i].get_future();
+        cout<<"site:"<<sitenames[i]<<" "<<sqls[i]<<endl;
         load_threads[i] = std::thread(Data_Insert_Delete_Thread, sitenames[i], sqls[i], std::ref(resultObjs[i]));
     }
 
@@ -109,7 +116,7 @@ ETree Data_Select_Execute(QTree tree)
     {
         string res_name = "tree_" + to_string(tree.tree_id) + "_node_" + to_string(root.id);
         string select_res;
-        if( root.site == LOCALSITE)
+        if( root.site == LOCALSITE || root.site == LOCALSITE2)
         {
             select_res=Select(root.sql_statement, root.site, res_name);
         }
@@ -118,7 +125,7 @@ ETree Data_Select_Execute(QTree tree)
 	    std::cout << "root site is: " << root.site << ", but localsite is: " << LOCALSITE << std::endl;
             printf("site do not in this station!");
         }
-	std::cout<<"select_res:"<<select_res<<std::endl;
+	    std::cout<<"select_res:"<<select_res<<std::endl;
         if(select_res=="FAIL")
         {
             time_t end_time = time(NULL);
@@ -162,7 +169,7 @@ ETree Data_Select_Execute(QTree tree)
 
             select_thread_exec_trees[q] = resultObjs[q].get_future();
 
-            if(site == LOCALSITE)
+            if(site == LOCALSITE || site == LOCALSITE2)
             {
                 select_threads[q] = std::thread(Data_Select_Execute_thread, sub_tree, std::ref(resultObjs[q]));
             }
@@ -290,7 +297,7 @@ void Data_Select_Execute_thread(QTree tree, std::promise<ETree> &resultObj)
     {
         string res_name = "tree_" + to_string(tree.tree_id) + "_node_" + to_string(root.id);
         string select_res;
-        if( root.site == LOCALSITE)
+        if( root.site == LOCALSITE || root.site == LOCALSITE2)
         {
             select_res=Select(root.sql_statement, root.site, res_name);
         }
@@ -347,7 +354,7 @@ void Data_Select_Execute_thread(QTree tree, std::promise<ETree> &resultObj)
 
             select_thread_exec_trees[q] = resultObjs[q].get_future();
 
-            if(site == LOCALSITE)
+            if(site == LOCALSITE || site == LOCALSITE2)
             {
                 select_threads[q] = std::thread(Data_Select_Execute_thread, sub_tree, std::ref(resultObjs[q]));
             }
@@ -466,26 +473,26 @@ void Data_Load_Thread(int site, string frag_sql, string frag_name, std::promise<
     /* 这里固定s1的意思是固定在每台机子的第一个MySQL实例上执行 */
     /* loacl_name和frag_name其实一模一样，所以爱怎么放怎么放，后面直接用frag_name */
     string local_name = Select_for_load(frag_sql, 1 ,frag_name,row_num);
-    /* 获得行数，这个函数要出现在LOAD前面，不然会把原来的表删掉 */
+   
     //row_num = my_mysql_res_get_rows(frag_name);
     // printf("local_name: %s", local_name);
     /* 在目标site上执行存储语句 */
     /* 判断一下是否为本地，并执行对应存储函数 */
-    if(site == LOCALSITE){
+    if(site == LOCALSITE || site == LOCALSITE2){
         frag_res = tmp_load(frag_name, site);
         // printf("localsite.\n%s\n", frag_res.data());
     }
-    else if(site == LOCALSITE2){
-        frag_res = tmp_load(frag_name, site);
-    }
+    //else if(site == LOCALSITE2){
+    //    frag_res = tmp_load(frag_name, site);
+    //}
     else{
-        需要实现！首先把frag_name.sql文件传输到site上，再在site上执行tmp_load(frag_name, site);
+        //需要实现！首先把frag_name.sql文件传输到site上，再在site上执行tmp_load(frag_name, site);
         printf("not localsite.");
-        //frag_res = RPC_Local_Tmp_Load(local_name, site);
+        frag_res = RPC_Local_Tmp_Load(local_name, site);
         // frag_res = Local_Tmp_Load(frag_name, site); // 先这么写着，防止transfer那边的问题
-        // printf("success .");
+        printf("success .");
         // printf("%s", frag_res.data());
-        // cout << frag_res;
+        cout << frag_res;
     }
     // frag_res = "OK";
     if(frag_res == "OK"){ /* 目标site上存储成功 */
